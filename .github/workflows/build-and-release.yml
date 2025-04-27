@@ -11,33 +11,51 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.x'
+        python-version: '3.11'
 
     - name: Install PlatformIO
       run: |
         pip install --user platformio
         pio --version
 
+    - name: Install dependencies
+      run: pio pkg install
+
     - name: Build firmware
       run: pio run -e nodemcuv2
+
+    - name: Verify firmware size
+      run: |
+        FIRMWARE_SIZE=$(stat -f%z .pio/build/nodemcuv2/firmware.bin)
+        if [ $FIRMWARE_SIZE -gt 1048576 ]; then
+          echo "Firmware size exceeds 1MB"
+          exit 1
+        fi
 
     - name: Upload firmware artifact
       uses: actions/upload-artifact@v4
       with:
         name: firmware
         path: .pio/build/nodemcuv2/firmware.bin
+        retention-days: 5
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
         files: .pio/build/nodemcuv2/firmware.bin
         name: Release ${{ github.ref_name }}
-        body: Automated release with firmware
+        body: |
+          Automated firmware release
+          - Version: ${{ github.ref_name }}
+          - Build date: ${{ github.event.head_commit.timestamp }}
+          - Commit: ${{ github.sha }}
         draft: false
         prerelease: false
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

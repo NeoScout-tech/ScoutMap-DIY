@@ -5,6 +5,8 @@
 #include <FS.h>
 #include "structs.h"
 #include "localization.h"
+#include <LittleFS.h>
+#include <WiFiClientSecure.h>
 
 void scanWiFiNetworks() {
   Serial.println(loc.getString("SCANNING_WIFI"));
@@ -101,8 +103,8 @@ bool hasInternet() {
 }
 
 void promptDeviceConnection() {
-  if (SPIFFS.begin()) {
-    File file = SPIFFS.open("/api_key.txt", "r");
+  if (LittleFS.begin()) {
+    File file = LittleFS.open("/api_key.txt", "r");
     if (file) {
       apiKey = file.readString();
       file.close();
@@ -148,12 +150,13 @@ void processDeviceCode(String input) {
     return;
   }
 
-  WiFiClient client;
+  WiFiClientSecure client;
   HTTPClient http;
-  http.begin(client, "http://netscout.tech/connect_device");
+  client.setInsecure(); // Игнорируем проверку SSL сертификата
+  http.begin(client, "https://netscout.tech/connect_device");
   http.addHeader("Content-Type", "application/json");
 
-  DynamicJsonDocument doc(512);
+  DynamicJsonDocument doc(1024); // Увеличиваем размер буфера
   doc["code"] = input;
   JsonObject deviceInfo = doc.createNestedObject("device_info");
   deviceInfo["name"] = "NetScout DIY (ESP8266)";
@@ -169,8 +172,8 @@ void processDeviceCode(String input) {
     DeserializationError error = deserializeJson(respDoc, response);
     if (!error && respDoc.containsKey("api_key")) {
       apiKey = respDoc["api_key"].as<String>();
-      if (SPIFFS.begin()) {
-        File file = SPIFFS.open("/api_key.txt", "w");
+      if (LittleFS.begin()) {
+        File file = LittleFS.open("/api_key.txt", "w");
         if (file) {
           file.print(apiKey);
           file.close();

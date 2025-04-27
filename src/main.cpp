@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <FS.h>
+#include <LittleFS.h>
 #include "wifi_utils.h"
 #include "scan_utils.h"
 #include "http_utils.h"
@@ -12,8 +13,8 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   loc.init();
-  if (!SPIFFS.begin()) {
-    Serial.println(F("Failed to mount SPIFFS"));
+  if (!LittleFS.begin()) {
+    Serial.println(F("Failed to mount LittleFS"));
   }
   Serial.println(loc.getString("HELP_PROMPT"));
   scanWiFiNetworks();

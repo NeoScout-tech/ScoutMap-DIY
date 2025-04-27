@@ -1,8 +1,8 @@
-# NetScout Host & Port Scanner
+# ScoutMap - Host & Port Scanner
 
-![NetScout Logo](https://i.imgur.com/0glGFjl.png)
+![ScoutMap](https://i.imgur.com/0glGFjl.png)
 
-Yo, welcome to the **NetScout Host & Port Scanner** — a badass tool cooked up by the crew at [NetScout](https://netscout.tech). This beast runs on ESP8266 for now, scanning networks, pinging hosts, and sniffing out open ports like a cyber bloodhound. It's lean, mean, and ready to dominate your network recon game. But hold up — we're already eyeing a full-on glow-up to our custom NetScout device on ESP32 for next-level performance. Ready to dive in? Let's roll.
+Yo, welcome to the **ScoutMap** — a badass tool cooked up by the crew at [NetScout](https://netscout.tech). This beast runs on ESP8266 for now, scanning networks, pinging hosts, and sniffing out open ports like a cyber bloodhound. It's lean, mean, and ready to dominate your network recon game. But hold up — we're already eyeing a full-on glow-up to our custom NetScout device on ESP32 for next-level performance. Ready to dive in? Let's roll.
 
 ## What's This Thing Do?
 
@@ -136,4 +136,4 @@ This project is licensed under the MIT License — do what you want, just give u
 
 Hit us up at [NetScout](https://netscout.tech) or join the chaos on [X](https://x.com/netscout_tech). We're always down to talk shop.
 
-**NetScout — We Scan, You Conquer.**
+**NetScout — Scan. Analyze. Take control.**

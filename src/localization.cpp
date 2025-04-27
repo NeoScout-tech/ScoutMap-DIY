@@ -79,7 +79,14 @@ const char Localization::langJson[] PROGMEM = R"LANG({
     "HELP_UPLOAD_INFO": "After scan: 'yes'/'no' to upload to %s.",
     "HELP_LOCATION_LOCAL": "Local scans: IP from ipify.org.",
     "HELP_LOCATION_REMOTE": "Remote scans: First IP/URL.",
-    "HELP_FOOTER": "====================="
+    "HELP_FOOTER": "=====================",
+    "PING_SUCCESS": "Ping successful: %s (%s)",
+    "PING_TIMEOUT": "Ping timeout: %s",
+    "PING_ERROR": "Ping error: %s",
+    "NO_HOSTS": "No hosts to scan",
+    "PROGRESS": "Progress: %.1f%%",
+    "HOST_RESULT": "Host %s:",
+    "PORT_OPEN": "Port %d: %s"
   }
 })LANG";
 

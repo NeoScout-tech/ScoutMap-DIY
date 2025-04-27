@@ -32,7 +32,7 @@ jobs:
 
     - name: Verify firmware size
       run: |
-        FIRMWARE_SIZE=$(stat -f%z .pio/build/nodemcuv2/firmware.bin)
+        FIRMWARE_SIZE=$(stat -c%s .pio/build/nodemcuv2/firmware.bin)
         if [ $FIRMWARE_SIZE -gt 1048576 ]; then
           echo "Firmware size exceeds 1MB"
           exit 1

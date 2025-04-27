@@ -110,15 +110,19 @@ void scanHosts() {
   }
 
   String ip = hosts[currentHostIndex].ip;
+  if (!silentMode) {
+    Serial.println(loc.getString("PINGING", ip));
+  }
+
   if (Ping.ping(ip.c_str(), 1)) {
     hosts[currentHostIndex].isActive = true;
     if (!silentMode) {
-      Serial.println(loc.getString("HOST_ACTIVE", ip));
+      Serial.println(loc.getString("HOST_ACTIVE"));
     }
   } else {
     hosts[currentHostIndex].isActive = false;
-    if (debugMode) {
-      Serial.println("[DEBUG] Host " + ip + " is offline");
+    if (!silentMode) {
+      Serial.println(loc.getString("HOST_INACTIVE"));
     }
   }
 

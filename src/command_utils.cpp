@@ -1,215 +1,322 @@
 #include "command_utils.h"
 #include "scan_utils.h"
-#include "wifi_utils.h"
 #include "http_utils.h"
 #include "structs.h"
+#include "wifi_utils.h"
+#include "config.h"
+#include <ArduinoJson.h>
+
+void clearWiFiCredentials() {
+    clearSavedWiFi();
+}
 
 void parseCommand(String cmd) {
-  if (debugMode) {
-    Serial.println("[DEBUG] Command received: " + cmd);
-    Serial.flush();
-  }
-
-  if (cmd == "help") {
-    printHelp();
-    return;
-  }
-
-  if (cmd.startsWith("lang ")) {
-    String lang = cmd.substring(5);
-    if (lang.isEmpty()) {
-      Serial.println("Invalid language command");
-      return;
-    }
-  } else if (cmd.startsWith("scan ")) {
-    int firstSpace = cmd.indexOf(' ');
-    int secondSpace = cmd.indexOf(' ', firstSpace + 1);
-    int thirdSpace = cmd.indexOf(' ', secondSpace + 1);
-    int fourthSpace = cmd.indexOf(' ', thirdSpace + 1);
-
-    if (firstSpace == -1 || secondSpace == -1) {
-      Serial.println("Invalid command: scan <hosts> <ports> [--silent|--debug]");
-      Serial.flush();
-      return;
-    }
-
-    lastHostsArg = cmd.substring(firstSpace + 1, secondSpace);
-    String portsArg = cmd.substring(secondSpace + 1, thirdSpace == -1 ? cmd.length() : thirdSpace);
-    silentMode = false;
-    debugMode = false;
-
-    if (thirdSpace != -1) {
-      String arg1 = cmd.substring(thirdSpace + 1, fourthSpace == -1 ? cmd.length() : fourthSpace);
-      if (arg1 == "--silent") silentMode = true;
-      else if (arg1 == "--debug") debugMode = true;
-
-      if (fourthSpace != -1) {
-        String arg2 = cmd.substring(fourthSpace + 1);
-        if (arg2 == "--silent") silentMode = true;
-        else if (arg2 == "--debug") debugMode = true;
-      }
-    }
-
-    if (debugMode) {
-      Serial.println("[DEBUG] Command: " + cmd);
-      Serial.println("[DEBUG] Hosts: " + lastHostsArg + ", Ports: " + portsArg + ", Silent mode: " + String(silentMode) + ", Debug mode: " + String(debugMode));
-      Serial.flush();
-    }
-
-    bool isLocal = (lastHostsArg == "all" || lastHostsArg.indexOf('-') != -1);
-    initHostScan(isLocal, lastHostsArg, portsArg); // Упрощён вызов
-
-    if (portsArg == "all") {
-      scanMode = "list";
-      portListCount = min(popularPortsCount, 20); // Ограничение до 20
-      for (int i = 0; i < portListCount; i++) {
-        portList[i] = popularPorts[i];
-      }
-    } else if (portsArg.indexOf('-') != -1) {
-      int dash = portsArg.indexOf('-');
-      startPort = portsArg.substring(0, dash).toInt();
-      endPort = portsArg.substring(dash + 1).toInt();
-      if (startPort < 1 || endPort > 65535 || startPort > endPort) {
-        Serial.println("Invalid port range");
-        if (debugMode) Serial.println("[DEBUG] Invalid port range: start=" + String(startPort) + ", end=" + String(endPort));
-        Serial.flush();
-        return;
-      }
-      scanMode = "range";
-    } else if (portsArg.indexOf(',') != -1) {
-      portListCount = 0;
-      int start = 0;
-      int comma = portsArg.indexOf(',');
-      while (comma != -1 && portListCount < 20) { // Ограничение до 20
-        int port = portsArg.substring(start, comma).toInt();
-        if (port >= 1 && port <= 65535) {
-          portList[portListCount++] = port;
+    if (browserMode) {
+        StaticJsonDocument<512> doc;
+        DeserializationError error = deserializeJson(doc, cmd);
+        if (error) {
+            Serial.println("{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
+            return;
         }
-        start = comma + 1;
-        comma = portsArg.indexOf(',', start);
-      }
-      int port = portsArg.substring(start).toInt();
-      if (port >= 1 && port <= 65535 && portListCount < 20) {
-        portList[portListCount++] = port;
-      }
-      if (portListCount == 0) {
-        Serial.println("Invalid port list");
-        if (debugMode) Serial.println("[DEBUG] Invalid port list: " + portsArg);
-        Serial.flush();
-        return;
-      }
-      scanMode = "list";
+        String command = doc["command"].as<String>();
+        if (command == "set_mode" && doc.containsKey("mode")) {
+            String mode = doc["mode"].as<String>();
+            if (mode == "browser") {
+                browserMode = true;
+                Serial.println("{\"status\":\"success\",\"message\":\"Browser mode enabled\"}");
+                return;
+            }
+        } else if (command == "scan") {
+            String hostsArg = doc["hosts"].as<String>();
+            silentMode = doc["silent"] | false;
+            debugMode = doc["debug"] | false;
+            lastHostsArg = hostsArg;
+            if (doc["ports"].is<String>()) {
+                String portsArg = doc["ports"].as<String>();
+                if (portsArg == "all") {
+                    scanMode = "list";
+                    portListCount = min(popularPortsCount, 100);
+                    for (int i = 0; i < portListCount; i++) {
+                        portList[i] = popularPorts[i];
+                    }
+                } else if (portsArg.indexOf('-') != -1) {
+                    int dash = portsArg.indexOf('-');
+                    startPort = portsArg.substring(0, dash).toInt();
+                    endPort = portsArg.substring(dash + 1).toInt();
+                    if (startPort < 1 || endPort > 65535 || startPort > endPort) {
+                        Serial.println("{\"status\":\"error\",\"message\":\"Invalid port range\"}");
+                        return;
+                    }
+                    if (endPort - startPort + 1 > 100) {
+                        Serial.println("{\"status\":\"error\",\"message\":\"Port range exceeds maximum of 100 ports\"}");
+                        return;
+                    }
+                    scanMode = "range";
+                } else if (portsArg.indexOf(',') != -1) {
+                    portListCount = 0;
+                    int start = 0;
+                    int comma = portsArg.indexOf(',');
+                    while (comma != -1 && portListCount < 100) {
+                        int port = portsArg.substring(start, comma).toInt();
+                        if (port >= 1 && port <= 65535) {
+                            portList[portListCount++] = port;
+                        }
+                        start = comma + 1;
+                        comma = portsArg.indexOf(',', start);
+                    }
+                    int port = portsArg.substring(start).toInt();
+                    if (port >= 1 && port <= 65535 && portListCount < 100) {
+                        portList[portListCount++] = port;
+                    }
+                    if (portListCount == 0) {
+                        Serial.println("{\"status\":\"error\",\"message\":\"Invalid port list\"}");
+                        return;
+                    }
+                    scanMode = "list";
+                } else {
+                    int port = portsArg.toInt();
+                    if (port < 1 || port > 65535) {
+                        Serial.println("{\"status\":\"error\",\"message\":\"Invalid port\"}");
+                        return;
+                    }
+                    scanMode = "single";
+                    portList[0] = port;
+                    portListCount = 1;
+                }
+            } else if (doc["ports"].is<JsonArray>()) {
+                JsonArray portsArray = doc["ports"].as<JsonArray>();
+                portListCount = 0;
+                if (portsArray.size() > 100) {
+                    Serial.println("{\"status\":\"error\",\"message\":\"Too many ports, maximum is 100\"}");
+                    return;
+                }
+                for (JsonVariant port : portsArray) {
+                    int p = port.as<int>();
+                    if (p >= 1 && p <= 65535) {
+                        portList[portListCount++] = (uint16_t)p;
+                    }
+                }
+                if (portListCount == 0) {
+                    Serial.println("{\"status\":\"error\",\"message\":\"No valid ports provided\"}");
+                    return;
+                }
+                scanMode = "list";
+            } else {
+                Serial.println("{\"status\":\"error\",\"message\":\"Invalid ports format\"}");
+                return;
+            }
+            bool isLocal = (hostsArg == "all" || hostsArg.indexOf('-') != -1);
+            initHostScan(isLocal, hostsArg, "");
+            totalSteps = hostCount;
+            currentStep = 0;
+            progress = 0.0;
+            Serial.println("{\"status\":\"success\",\"message\":\"Starting scan\"}");
+            scanningHosts = true;
+        } else if (command == "stop") {
+            stopScan();
+            return;
+        } else if (command == "ping") {
+            String host = doc["host"].as<String>();
+            manualPing(host);
+            return;
+        } else if (command == "clear_wifi") {
+            clearWiFiCredentials();
+            return;
+        } else {
+            Serial.println("{\"status\":\"error\",\"message\":\"Unknown command\"}");
+        }
     } else {
-      int port = portsArg.toInt();
-      if (port < 1 || port > 65535) {
-        Serial.println("Invalid port");
-        if (debugMode) Serial.println("[DEBUG] Invalid port: " + portsArg);
-        Serial.flush();
-        return;
-      }
-      scanMode = "single";
-      portList[0] = port;
-      portListCount = 1;
+        if (cmd == "help") {
+            printHelp();
+            return;
+        }
+        if (cmd.startsWith("set_mode browser")) {
+            browserMode = true;
+            Serial.println("Browser mode enabled");
+            return;
+        }
+        if (cmd == "clear_wifi") {
+            clearWiFiCredentials();
+            return;
+        }
+        if (cmd.startsWith("lang ")) {
+            String lang = cmd.substring(5);
+            if (lang.isEmpty()) {
+                Serial.println("Invalid language command");
+                return;
+            }
+        } else if (cmd.startsWith("scan ")) {
+            int firstSpace = cmd.indexOf(' ');
+            int secondSpace = cmd.indexOf(' ', firstSpace + 1);
+            int thirdSpace = cmd.indexOf(' ', secondSpace + 1);
+            int fourthSpace = cmd.indexOf(' ', thirdSpace + 1);
+            if (firstSpace == -1 || secondSpace == -1) {
+                Serial.println("Invalid command: scan <hosts> <ports> [--silent|--debug]");
+                return;
+            }
+            lastHostsArg = cmd.substring(firstSpace + 1, secondSpace);
+            String portsArg = cmd.substring(secondSpace + 1, thirdSpace == -1 ? cmd.length() : thirdSpace);
+            silentMode = false;
+            debugMode = false;
+            if (thirdSpace != -1) {
+                String arg1 = cmd.substring(thirdSpace + 1, fourthSpace == -1 ? cmd.length() : fourthSpace);
+                if (arg1 == "--silent") silentMode = true;
+                else if (arg1 == "--debug") debugMode = true;
+                if (fourthSpace != -1) {
+                    String arg2 = cmd.substring(fourthSpace + 1);
+                    if (arg2 == "--silent") silentMode = true;
+                    else if (arg2 == "--debug") debugMode = true;
+                }
+            }
+            if (debugMode) {
+                Serial.println("[DEBUG] Command: " + cmd);
+                Serial.println("[DEBUG] Hosts: " + lastHostsArg + ", Ports: " + portsArg + ", Silent mode: " + String(silentMode) + ", Debug mode: " + String(debugMode));
+            }
+            bool isLocal = (lastHostsArg == "all" || lastHostsArg.indexOf('-') != -1);
+            initHostScan(isLocal, lastHostsArg, portsArg);
+            if (portsArg == "all") {
+                scanMode = "list";
+                portListCount = min(popularPortsCount, 100);
+                for (int i = 0; i < portListCount; i++) {
+                    portList[i] = popularPorts[i];
+                }
+            } else if (portsArg.indexOf('-') != -1) {
+                int dash = portsArg.indexOf('-');
+                startPort = portsArg.substring(0, dash).toInt();
+                endPort = portsArg.substring(dash + 1).toInt();
+                if (startPort < 1 || endPort > 65535 || startPort > endPort) {
+                    Serial.println("Invalid port range");
+                    if (debugMode) Serial.println("[DEBUG] Invalid port range: start=" + String(startPort) + ", end=" + String(endPort));
+                    return;
+                }
+                if (endPort - startPort + 1 > 100) {
+                    Serial.println("Port range exceeds maximum of 100 ports");
+                    return;
+                }
+                scanMode = "range";
+            } else if (portsArg.indexOf(',') != -1) {
+                portListCount = 0;
+                int start = 0;
+                int comma = portsArg.indexOf(',');
+                while (comma != -1 && portListCount < 100) {
+                    int port = portsArg.substring(start, comma).toInt();
+                    if (port >= 1 && port <= 65535) {
+                        portList[portListCount++] = port;
+                    }
+                    start = comma + 1;
+                    comma = portsArg.indexOf(',', start);
+                }
+                int port = portsArg.substring(start).toInt();
+                if (port >= 1 && port <= 65535 && portListCount < 100) {
+                    portList[portListCount++] = port;
+                }
+                if (portListCount == 0) {
+                    Serial.println("Invalid port list");
+                    if (debugMode) Serial.println("[DEBUG] Invalid port list: " + portsArg);
+                    return;
+                }
+                scanMode = "list";
+            } else {
+                int port = portsArg.toInt();
+                if (port < 1 || port > 65535) {
+                    Serial.println("Invalid port");
+                    if (debugMode) Serial.println("[DEBUG] Invalid port: " + portsArg);
+                    return;
+                }
+                scanMode = "single";
+                portList[0] = port;
+                portListCount = 1;
+            }
+            totalSteps = hostCount;
+            currentStep = 0;
+            progress = 0.0;
+            if (debugMode) {
+                Serial.println("[DEBUG] Scan mode: " + scanMode + ", Hosts: " + String(hostCount) + ", Total steps: " + String(totalSteps));
+                Serial.println("[DEBUG] Ports: " + (scanMode == "range" ? (String(startPort) + "-" + String(endPort)) : String(portListCount) + " ports"));
+            }
+            Serial.println("Starting scan...");
+            scanningHosts = true;
+        } else if (cmd.startsWith("ping")) {
+            int space = cmd.indexOf(' ');
+            if (space == -1) {
+                Serial.println("Invalid command: ping <IP|URL>");
+                return;
+            }
+            String host = cmd.substring(space + 1);
+            manualPing(host);
+        } else if (cmd == "stop") {
+            stopScan();
+        } else {
+            Serial.println("Unknown command. Enter 'help'");
+        }
     }
-
-    totalSteps = hostCount;
-    if (scanMode == "range") {
-      totalSteps += countActiveHosts() * (endPort - startPort + 1);
-    } else {
-      totalSteps += countActiveHosts() * portListCount;
-    }
-    currentStep = 0;
-    progress = 0.0;
-
-    if (debugMode) {
-      Serial.println("[DEBUG] Scan mode: " + scanMode + ", Hosts: " + String(hostCount) + ", Total steps: " + String(totalSteps));
-      Serial.println("[DEBUG] Ports: " + (scanMode == "range" ? (String(startPort) + "-" + String(endPort)) : String(portListCount) + " ports"));
-      Serial.flush();
-    }
-
-    String modeInfo = silentMode ? " (silent mode)" : (debugMode ? " (debug mode)" : "");
-    Serial.printf("Starting scan...%s\n", modeInfo.c_str());
-    Serial.flush();
-    scanningHosts = true;
-  } else if (cmd.startsWith("ping")) {
-    int space = cmd.indexOf(' ');
-    if (space == -1) {
-      Serial.println("Invalid command: ping <IP|URL>");
-      Serial.flush();
-      return;
-    }
-    String host = cmd.substring(space + 1);
-    manualPing(host);
-  } else if (cmd == "stop") {
-    stopScan(); // Вызываем отдельную функцию
-  } else {
-    Serial.println("Unknown command. Enter 'help'");
-    Serial.flush();
-  }
 }
 
 void printHelp() {
-  Serial.println("=== Scanner Help ===");
-  Serial.println("Commands:");
-  Serial.println("  scan <hosts> <ports> [--silent|--debug]");
-  Serial.println("    - Scans hosts and ports");
-  Serial.println("    - Hosts:");
-  Serial.println("      - all: Local subnet");
-  Serial.println("      - <IP>: Single IP");
-  Serial.println("      - <URL>: Domain");
-  Serial.println("      - <IP_start>-<IP_end>: IP range");
-  Serial.println("      - <IP1>,<IP2>,<URL>: List");
-  Serial.println("    - Ports:");
-  Serial.println("      - all: Popular ports");
-  Serial.println("      - <port>: Single port");
-  Serial.println("      - <port_start>-<port_end>: Port range");
-  Serial.println("      - <port1>,<port2>: Port list");
-  Serial.println("    - Options:");
-  Serial.println("      - --silent: Progress only");
-  Serial.println("      - --debug: Detailed debug");
-  Serial.println("    Examples:");
-  Serial.println("      scan all all --silent");
-  Serial.println("      scan 8.8.8.8 53 --debug");
-  Serial.println("      scan google.com 80,443");
-  Serial.println("      scan 192.168.0.20-192.168.0.40 5000");
-  Serial.println("      scan 192.168.0.20,google.com 80-100 --silent");
-  Serial.println("  ping <IP|URL>");
-  Serial.println("    - Pings IP/URL");
-  Serial.println("  stop");
-  Serial.println("    - Stops scan");
-  Serial.println("  help");
-  Serial.println("    - Shows help");
-  Serial.println("  lang <language_code>");
-  Serial.println("    - Changes language (en)");
-  Serial.println("After scan: 'yes'/'no' to upload to netscout.tech");
-  Serial.println("Local scans: IP from ipify.org");
-  Serial.println("Remote scans: First IP/URL");
-  Serial.println("=====================");
-  Serial.flush();
+    if (browserMode) {
+        StaticJsonDocument<1024> doc;
+        doc["status"] = "success";
+        doc["message"] = "Commands: scan, ping, stop, set_mode, clear_wifi";
+        String jsonString;
+        serializeJson(doc, jsonString);
+        Serial.println(jsonString);
+    } else {
+        Serial.println("=== Scanner Help ===");
+        Serial.println("Commands:");
+        Serial.println("  scan <hosts> <ports> [--silent|--debug]");
+        Serial.println("    - Scans hosts and ports");
+        Serial.println("    - Hosts: all, <IP>, <URL>, <IP_start>-<IP_end>, <IP1>,<IP2>,<URL>");
+        Serial.println("    - Ports: all, <port>, <port_start>-<port_end>, <port1>,<port2>");
+        Serial.println("    - Options: --silent, --debug");
+        Serial.println("  ping <IP|URL> - Pings IP/URL");
+        Serial.println("  stop - Stops scan");
+        Serial.println("  set_mode browser - Enables browser mode");
+        Serial.println("  clear_wifi - Clears saved Wi-Fi credentials");
+        Serial.println("  help - Shows help");
+        Serial.println("=====================");
+    }
 }
 
 void stopScan() {
-  scanningHosts = false;
-  scanningPorts = false;
-  clearMemory();
-  Serial.println("Scan stopped");
-  Serial.flush();
+    scanningHosts = false;
+    scanningPorts = false;
+    clearMemory();
+    if (browserMode) {
+        Serial.println("{\"status\":\"success\",\"message\":\"Scan stopped\"}");
+    } else {
+        Serial.println("Scan stopped");
+    }
 }
 
 void processUploadDecision(String input) {
-  input.trim();
-  if (input == "yes") {
-    uploadReport = true; // Включаем загрузку
-    uploadScanReport();
-  } else if (input == "no") {
+    input.trim();
+    if (browserMode) {
+        StaticJsonDocument<256> doc;
+        DeserializationError error = deserializeJson(doc, input);
+        if (error || !doc.containsKey("decision")) {
+            Serial.println("{\"status\":\"error\",\"message\":\"Invalid JSON or missing decision\"}");
+            return;
+        }
+        input = doc["decision"].as<String>();
+    }
+    if (input == "yes") {
+        uploadReport = true;
+        uploadScanReport();
+    } else if (input == "no") {
+        uploadReport = false;
+        if (browserMode) {
+            Serial.println("{\"status\":\"success\",\"message\":\"Upload skipped\"}");
+        } else {
+            Serial.println("Upload skipped");
+        }
+    } else {
+        if (browserMode) {
+            Serial.println("{\"status\":\"error\",\"message\":\"Invalid upload decision, expected 'yes' or 'no'\"}");
+        } else {
+            Serial.println("Invalid upload input");
+        }
+        return;
+    }
     uploadReport = false;
-    Serial.println("Upload skipped");
-    Serial.flush();
-  } else {
-    Serial.println("Invalid upload input");
-    Serial.flush();
-    return;
-  }
-  uploadReport = false;
-  clearMemory();
+    clearMemory();
 }

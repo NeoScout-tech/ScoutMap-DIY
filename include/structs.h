@@ -1,14 +1,14 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-#include <WString.h>
+#include <Arduino.h>
 
 struct Host {
-  String ip;
-  bool isActive;
-  int openPorts[20];
-  String services[20];
-  int openPortCount;
+    String ip;
+    bool isActive;
+    uint16_t openPorts[20];
+    String services[20];
+    int openPortCount;
 };
 
 extern String selectedSSID;
@@ -20,10 +20,10 @@ extern String lastHostsArg;
 extern String scanMode;
 extern int startPort;
 extern int endPort;
-extern int portList[43];
+extern uint16_t portList[100];
 extern int portListCount;
 extern int hostCount;
-extern Host hosts[30];
+extern Host hosts[256];
 extern bool scanningHosts;
 extern bool scanningPorts;
 extern int totalSteps;
@@ -35,7 +35,8 @@ extern bool uploadReport;
 extern int currentHostIndex;
 extern int currentPortIndex;
 extern int currentPort;
-extern bool deviceConnected; // Для статуса подключения к netscout.tech
-extern String apiKey; // Храним API-ключ
+extern bool deviceConnected;
+extern String apiKey;
+extern bool browserMode;
 
 #endif

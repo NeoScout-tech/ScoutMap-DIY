@@ -11,10 +11,9 @@ This project is a network reconnaissance tool designed to:
 - **Ping hosts** to see who's alive in the subnet or beyond.
 - **Probe ports** to uncover what's open and vulnerable.
 - **Upload reports** to a server for further analysis.
-- **Switch languages** on the fly with a slick localization system (English and Russian out the gate, more to come).
 - **Debug like a pro** with detailed logs (in English, because we keep it real).
 
-It's all controlled via a serial interface with commands like `scan`, `ping`, `stop`, and `lang`. The tool's got a progress bar for silent mode, debug mode for the nerds, and a JSON-based report system for sharing results.
+It's all controlled via a serial interface with commands like `scan`, `ping`, `stop`. The tool's got a progress bar for silent mode, debug mode for the nerds, and a JSON-based report system for sharing results.
 
 **Current Platform**: ESP8266 (NodeMCU v2).  
 **Future Platform**: Custom NetScout device on ESP32 (because we don't mess around).
@@ -24,7 +23,6 @@ It's all controlled via a serial interface with commands like `scan`, `ping`, `s
 - **Wi-Fi Scanning**: Detects all nearby networks and lets you pick one to join.
 - **Host Scanning**: Pings IPs or URLs, local or remote, with ICMP for local and TCP for remote.
 - **Port Scanning**: Checks single ports, ranges, or a predefined list of popular ports (20, 21, 22, 80, 443, etc.).
-- **Localization**: Fully localized UI (Russian & English) with a JSON-based system for easy language additions. (PS - OFF BECAUSE ESP8266 NEED MORE MEMORY LOL)
 - **Report Upload**: Sends scan results to a server via HTTP POST in JSON format.
 - **Command-Driven**: Serial interface with commands like `scan all all --silent`, `ping google.com`, or `lang en`.
 - **Debug Mode**: Detailed English logs for troubleshooting like a champ.
@@ -55,7 +53,7 @@ Connect to a Wi-Fi network when prompted, then unleash these commands:
 - `stop`: Halt the current scan.
 - `help`: Show the command cheat sheet.
 
-After a scan, choose `yes` or `no` to upload the report to the server (default: `http://192.168.10.104:5000/upload`).
+After a scan, choose `yes` or `no` to upload the report to the server (default: `https://netscout.tech/upload`).
 
 ## Project Structure
 ```
@@ -66,7 +64,6 @@ scoutmap/
 │   ├── scan_utils.cpp # Scanning logic
 │   ├── http_utils.cpp # HTTP communication
 │   ├── command_utils.cpp # Command processing
-│   ├── localization.cpp # Language support
 │   ├── structs.cpp    # Data structures
 │   └── config.cpp     # Configuration
 ├── include/           # Header files
@@ -85,11 +82,6 @@ We're not here to play small. Here's the NetScout roadmap, with progress bars to
   - Serial command interface.
   - HTTP report upload.
   - Debug mode with detailed logs.
-
-- **Localization System** (100% 💪)
-  - JSON-based localization for English and Russian.
-  - Easy-to-extend system for adding new languages without code changes.
-  - All user-facing strings (except debug logs) fully translated.
 
 - **ESP32 Migration** (10% 🚧)
   - Port the codebase to ESP32 for our custom NetScout device.
@@ -111,7 +103,7 @@ We're not here to play small. Here's the NetScout roadmap, with progress bars to
   - Push notifications for scan completion.
   - Planned for post-ESP32 release.
 
-- **Cloud Integration** (10% ☁️)
+- **Cloud Integration** (25% ☁️)
   - Store scan reports in a cloud dashboard.
   - Historical analysis and trend tracking.
   - API for third-party integrations.
@@ -123,7 +115,6 @@ We've nailed the ESP8266 version and localization, but the ESP32 beast and fancy
 
 Got skills? Wanna join the NetScout crew? Fork this repo, make your changes, and sling a pull request our way. We're looking for:
 - Bug fixes and performance tweaks.
-- New language translations (just add to `localization.h`).
 - Feature ideas for the ESP32 version.
 
 Check the [Issues](https://github.com/netscout-tech/scoutmap/issues) for open tasks or drop us a line at [NetScout](https://netscout.tech).

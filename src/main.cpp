@@ -7,16 +7,14 @@
 #include "http_utils.h"
 #include "command_utils.h"
 #include "structs.h"
-#include "localization.h"
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  loc.init();
   if (!LittleFS.begin()) {
     Serial.println(F("Failed to mount LittleFS"));
   }
-  Serial.println(loc.getString("HELP_PROMPT"));
+  Serial.println("Enter 'help' for commands.");
   scanWiFiNetworks();
 }
 
@@ -43,7 +41,7 @@ void loop() {
     } else if (input.equalsIgnoreCase("yes") || input.equalsIgnoreCase("no")) {
       processUploadDecision(input);
     } else {
-      Serial.println(loc.getString("UNKNOWN_COMMAND"));
+      Serial.println("Unknown command. Enter 'help'");
     }
   }
   

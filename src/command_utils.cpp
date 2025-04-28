@@ -3,7 +3,6 @@
 #include "wifi_utils.h"
 #include "http_utils.h"
 #include "structs.h"
-#include "localization.h"
 
 void parseCommand(String cmd) {
   if (debugMode) {
@@ -16,26 +15,20 @@ void parseCommand(String cmd) {
     return;
   }
 
-  if (cmd.startsWith("lang")) {
-    int space = cmd.indexOf(' ');
-    if (space == -1) {
-      Serial.println(loc.getString("INVALID_LANG_COMMAND"));
-      Serial.flush();
+  if (cmd.startsWith("lang ")) {
+    String lang = cmd.substring(5);
+    if (lang.isEmpty()) {
+      Serial.println("Invalid language command");
       return;
     }
-    String lang = cmd.substring(space + 1);
-    loc.setLanguage(lang);
-    return;
-  }
-
-  if (cmd.startsWith("scan")) {
+  } else if (cmd.startsWith("scan ")) {
     int firstSpace = cmd.indexOf(' ');
     int secondSpace = cmd.indexOf(' ', firstSpace + 1);
     int thirdSpace = cmd.indexOf(' ', secondSpace + 1);
     int fourthSpace = cmd.indexOf(' ', thirdSpace + 1);
 
     if (firstSpace == -1 || secondSpace == -1) {
-      Serial.println(loc.getString("INVALID_COMMAND", "scan <hosts> <ports> [--silent|--debug]"));
+      Serial.println("Invalid command: scan <hosts> <ports> [--silent|--debug]");
       Serial.flush();
       return;
     }
@@ -77,7 +70,7 @@ void parseCommand(String cmd) {
       startPort = portsArg.substring(0, dash).toInt();
       endPort = portsArg.substring(dash + 1).toInt();
       if (startPort < 1 || endPort > 65535 || startPort > endPort) {
-        Serial.println(loc.getString("INVALID_PORT_RANGE"));
+        Serial.println("Invalid port range");
         if (debugMode) Serial.println("[DEBUG] Invalid port range: start=" + String(startPort) + ", end=" + String(endPort));
         Serial.flush();
         return;
@@ -100,7 +93,7 @@ void parseCommand(String cmd) {
         portList[portListCount++] = port;
       }
       if (portListCount == 0) {
-        Serial.println(loc.getString("INVALID_PORT_LIST"));
+        Serial.println("Invalid port list");
         if (debugMode) Serial.println("[DEBUG] Invalid port list: " + portsArg);
         Serial.flush();
         return;
@@ -109,7 +102,7 @@ void parseCommand(String cmd) {
     } else {
       int port = portsArg.toInt();
       if (port < 1 || port > 65535) {
-        Serial.println(loc.getString("INVALID_PORT"));
+        Serial.println("Invalid port");
         if (debugMode) Serial.println("[DEBUG] Invalid port: " + portsArg);
         Serial.flush();
         return;
@@ -135,13 +128,13 @@ void parseCommand(String cmd) {
     }
 
     String modeInfo = silentMode ? " (silent mode)" : (debugMode ? " (debug mode)" : "");
-    Serial.println(loc.getString("SCAN_START", modeInfo));
+    Serial.printf("Starting scan...%s\n", modeInfo.c_str());
     Serial.flush();
     scanningHosts = true;
   } else if (cmd.startsWith("ping")) {
     int space = cmd.indexOf(' ');
     if (space == -1) {
-      Serial.println(loc.getString("INVALID_COMMAND", "ping <IP|URL>"));
+      Serial.println("Invalid command: ping <IP|URL>");
       Serial.flush();
       return;
     }
@@ -150,48 +143,48 @@ void parseCommand(String cmd) {
   } else if (cmd == "stop") {
     stopScan(); // Вызываем отдельную функцию
   } else {
-    Serial.println(loc.getString("UNKNOWN_COMMAND"));
+    Serial.println("Unknown command. Enter 'help'");
     Serial.flush();
   }
 }
 
 void printHelp() {
-  Serial.println(loc.getString("HELP_HEADER"));
-  Serial.println(loc.getString("HELP_COMMANDS"));
-  Serial.println(loc.getString("HELP_SCAN"));
-  Serial.println(loc.getString("HELP_SCAN_DESC"));
-  Serial.println(loc.getString("HELP_HOSTS"));
-  Serial.println(loc.getString("HELP_ALL"));
-  Serial.println(loc.getString("HELP_SINGLE_IP"));
-  Serial.println(loc.getString("HELP_URL"));
-  Serial.println(loc.getString("HELP_IP_RANGE"));
-  Serial.println(loc.getString("HELP_IP_LIST"));
-  Serial.println(loc.getString("HELP_PORTS"));
-  Serial.println(loc.getString("HELP_ALL_PORTS"));
-  Serial.println(loc.getString("HELP_SINGLE_PORT"));
-  Serial.println(loc.getString("HELP_PORT_RANGE"));
-  Serial.println(loc.getString("HELP_PORT_LIST"));
-  Serial.println(loc.getString("HELP_OPTIONS"));
-  Serial.println(loc.getString("HELP_SILENT"));
-  Serial.println(loc.getString("HELP_DEBUG"));
-  Serial.println(loc.getString("HELP_EXAMPLES"));
-  Serial.println(loc.getString("HELP_EXAMPLE_1"));
-  Serial.println(loc.getString("HELP_EXAMPLE_2"));
-  Serial.println(loc.getString("HELP_EXAMPLE_3"));
-  Serial.println(loc.getString("HELP_EXAMPLE_4"));
-  Serial.println(loc.getString("HELP_EXAMPLE_5"));
-  Serial.println(loc.getString("HELP_PING"));
-  Serial.println(loc.getString("HELP_PING_DESC"));
-  Serial.println(loc.getString("HELP_STOP"));
-  Serial.println(loc.getString("HELP_STOP_DESC"));
-  Serial.println(loc.getString("HELP_HELP"));
-  Serial.println(loc.getString("HELP_HELP_DESC"));
-  Serial.println(loc.getString("HELP_LANG"));
-  Serial.println(loc.getString("HELP_LANG_DESC"));
-  Serial.println(loc.getString("HELP_UPLOAD_INFO", "netscout.tech")); // Заменили serverUrl
-  Serial.println(loc.getString("HELP_LOCATION_LOCAL"));
-  Serial.println(loc.getString("HELP_LOCATION_REMOTE"));
-  Serial.println(loc.getString("HELP_FOOTER"));
+  Serial.println("=== Scanner Help ===");
+  Serial.println("Commands:");
+  Serial.println("  scan <hosts> <ports> [--silent|--debug]");
+  Serial.println("    - Scans hosts and ports");
+  Serial.println("    - Hosts:");
+  Serial.println("      - all: Local subnet");
+  Serial.println("      - <IP>: Single IP");
+  Serial.println("      - <URL>: Domain");
+  Serial.println("      - <IP_start>-<IP_end>: IP range");
+  Serial.println("      - <IP1>,<IP2>,<URL>: List");
+  Serial.println("    - Ports:");
+  Serial.println("      - all: Popular ports");
+  Serial.println("      - <port>: Single port");
+  Serial.println("      - <port_start>-<port_end>: Port range");
+  Serial.println("      - <port1>,<port2>: Port list");
+  Serial.println("    - Options:");
+  Serial.println("      - --silent: Progress only");
+  Serial.println("      - --debug: Detailed debug");
+  Serial.println("    Examples:");
+  Serial.println("      scan all all --silent");
+  Serial.println("      scan 8.8.8.8 53 --debug");
+  Serial.println("      scan google.com 80,443");
+  Serial.println("      scan 192.168.0.20-192.168.0.40 5000");
+  Serial.println("      scan 192.168.0.20,google.com 80-100 --silent");
+  Serial.println("  ping <IP|URL>");
+  Serial.println("    - Pings IP/URL");
+  Serial.println("  stop");
+  Serial.println("    - Stops scan");
+  Serial.println("  help");
+  Serial.println("    - Shows help");
+  Serial.println("  lang <language_code>");
+  Serial.println("    - Changes language (en)");
+  Serial.println("After scan: 'yes'/'no' to upload to netscout.tech");
+  Serial.println("Local scans: IP from ipify.org");
+  Serial.println("Remote scans: First IP/URL");
+  Serial.println("=====================");
   Serial.flush();
 }
 
@@ -199,21 +192,21 @@ void stopScan() {
   scanningHosts = false;
   scanningPorts = false;
   clearMemory();
-  Serial.println(loc.getString("SCAN_STOPPED"));
+  Serial.println("Scan stopped");
   Serial.flush();
 }
 
 void processUploadDecision(String input) {
   input.trim();
-  if (input.equalsIgnoreCase("yes")) {
+  if (input == "yes") {
     uploadReport = true; // Включаем загрузку
     uploadScanReport();
-  } else if (input.equalsIgnoreCase("no")) {
+  } else if (input == "no") {
     uploadReport = false;
-    Serial.println(loc.getString("UPLOAD_SKIPPED"));
+    Serial.println("Upload skipped");
     Serial.flush();
   } else {
-    Serial.println(loc.getString("INVALID_UPLOAD_INPUT"));
+    Serial.println("Invalid upload input");
     Serial.flush();
     return;
   }

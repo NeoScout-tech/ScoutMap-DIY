@@ -1,9 +1,10 @@
 #include "http_utils.h"
 #include <Arduino.h> // Для Serial
+#include <ArduinoJson.h>
 
 void uploadScanReport() {
   if (WiFi.status() != WL_CONNECTED || !deviceConnected || apiKey == "") {
-    Serial.println(loc.getString("CONNECTION_FAILED"));
+    Serial.println("Connection failed");
     return;
   }
 
@@ -16,7 +17,7 @@ void uploadScanReport() {
     Serial.flush();
   }
 
-  DynamicJsonDocument doc(2048);
+  StaticJsonDocument<2048> doc;
   doc["api_key"] = apiKey;
   doc["location"] = getLocation();
   
@@ -54,7 +55,7 @@ void uploadScanReport() {
   
   if (httpCode == HTTP_CODE_OK) {
     String response = http.getString();
-    Serial.println(loc.getString("REPORT_UPLOADED", response));
+    Serial.printf("Report uploaded: %s\n", response.c_str());
     if (debugMode) {
       Serial.println("[DEBUG] HTTP response code: " + String(httpCode));
       Serial.println("[DEBUG] Response body: " + response);
@@ -62,7 +63,7 @@ void uploadScanReport() {
     }
   } else {
     String response = http.getString();
-    Serial.println(loc.getString("REPORT_UPLOAD_FAILED", String(httpCode)));
+    Serial.printf("Upload failed. Code: %d\n", httpCode);
     Serial.println(F("Server response: ") + (response == "" ? "No response" : response));
     if (debugMode) {
       Serial.println("[DEBUG] HTTP response code: " + String(httpCode));
@@ -88,7 +89,7 @@ String getExternalIP() {
     if (debugMode) {
       Serial.println("[DEBUG] HTTP error: " + String(httpCode));
     }
-    Serial.println(loc.getString("EXTERNAL_IP_FAILED"));
+    Serial.println("Failed to get external IP");
   }
   
   http.end();
@@ -111,8 +112,8 @@ String resolveHost(String host) {
     if (debugMode) {
       Serial.println("[DEBUG] Failed to resolve host: " + host);
     }
-    Serial.println(loc.getString("DNS_FAILED", host));
-    return host; // Возвращаем исходный хост в случае неудачи
+    Serial.printf("DNS failed for %s\n", host);
+    return ""; // Возвращаем исходный хост в случае неудачи
   }
 }
 

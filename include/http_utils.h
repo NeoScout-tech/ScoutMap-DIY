@@ -6,7 +6,6 @@
 #include "structs.h"
 #include "config.h" // Добавляем включение config.h
 #include "wifi_utils.h"
-#include "localization.h"
 
 String getExternalIP();
 String getLocation();

@@ -3,7 +3,6 @@
 #include <ESP8266Ping.h>
 #include "structs.h"
 #include "wifi_utils.h"
-#include "localization.h"
 #include "config.h"
 
 void initHostScan(bool isLocal, String hostsArg, String portsArg) {
@@ -31,7 +30,7 @@ void initHostScan(bool isLocal, String hostsArg, String portsArg) {
     String endIP = hostsArg.substring(dash + 1);
     IPAddress startAddr, endAddr;
     if (!startAddr.fromString(startIP) || !endAddr.fromString(endIP)) {
-      Serial.println(loc.getString("INVALID_IP_RANGE"));
+      Serial.println("Invalid IP range");
       scanningHosts = false;
       return;
     }
@@ -95,7 +94,7 @@ void initHostScan(bool isLocal, String hostsArg, String portsArg) {
   }
 
   if (hostCount == 0) {
-    Serial.println(loc.getString("NO_HOSTS"));
+    Serial.println("No hosts to scan");
     scanningHosts = false;
   }
 }
@@ -106,23 +105,28 @@ void scanHosts() {
     scanningPorts = (countActiveHosts() > 0);
     currentHostIndex = 0;
     currentPortIndex = 0;
+    if (!silentMode) {
+      Serial.println("Scan results:");
+    }
     return;
   }
 
   String ip = hosts[currentHostIndex].ip;
   if (!silentMode) {
-    Serial.println(loc.getString("PINGING", ip));
+    Serial.printf("Pinging %s...\n", ip.c_str());
   }
 
   if (Ping.ping(ip.c_str(), 1)) {
     hosts[currentHostIndex].isActive = true;
     if (!silentMode) {
-      Serial.println(loc.getString("HOST_ACTIVE"));
+      Serial.printf("Host %s is online\n", ip.c_str());
+      Serial.printf("ping %d, timeout %d, total payload %d bytes, %d ms\n", 1, 0, 32, 1000);
     }
   } else {
     hosts[currentHostIndex].isActive = false;
     if (!silentMode) {
-      Serial.println(loc.getString("HOST_INACTIVE"));
+      Serial.printf("Host %s is offline\n", ip.c_str());
+      Serial.printf("ping %d, timeout %d, total payload %d bytes, %d ms\n", 1, 1, 0, 1000);
     }
   }
 
@@ -130,7 +134,7 @@ void scanHosts() {
   currentStep++;
   progress = (float)currentStep / totalSteps * 100.0;
   if (!silentMode) {
-    Serial.println(loc.getString("PROGRESS", progress));
+    Serial.printf("Progress: %.1f%%\n", progress);
   }
 }
 
@@ -193,15 +197,15 @@ void scanPorts() {
     if (!silentMode) {
       for (int i = 0; i < hostCount; i++) {
         if (hosts[i].isActive) {
-          Serial.println(loc.getString("HOST_RESULT", hosts[i].ip));
+          Serial.printf("Host %s:\n", hosts[i].ip.c_str());
           for (int j = 0; j < hosts[i].openPortCount; j++) {
-            Serial.println(loc.getString("PORT_OPEN", String(hosts[i].openPorts[j]), hosts[i].services[j]));
+            Serial.printf("Port %s is open (%s)\n", String(hosts[i].openPorts[j]).c_str(), hosts[i].services[j].c_str());
           }
         }
       }
     }
     if (uploadReport) {
-      Serial.println(loc.getString("UPLOAD_PROMPT"));
+      Serial.println("Upload report to server? (yes/no)");
     }
     return;
   }
@@ -236,7 +240,7 @@ void scanPorts() {
       hosts[currentHostIndex].openPortCount++;
     }
     if (!silentMode) {
-      Serial.println(loc.getString("PORT_OPEN", String(currentPort), hosts[currentHostIndex].services[hosts[currentHostIndex].openPortCount - 1]));
+      Serial.printf("Port %s is open (%s)\n", String(currentPort).c_str(), hosts[currentHostIndex].services[hosts[currentHostIndex].openPortCount - 1].c_str());
     }
     client.stop();
   } else {
@@ -254,16 +258,16 @@ void scanPorts() {
   currentStep++;
   progress = (float)currentStep / totalSteps * 100.0;
   if (!silentMode) {
-    Serial.println(loc.getString("PROGRESS", String(progress)));
+    Serial.printf("Progress: %.1f%%\n", progress);
   }
 }
 
 void manualPing(String host) {
   String ip = resolveHost(host);
   if (Ping.ping(ip.c_str(), 1)) {
-    Serial.println(loc.getString("PING_SUCCESS", host, ip));
+    Serial.printf("Ping successful: %s\n", host.c_str());
   } else {
-    Serial.println(loc.getString("PING_FAILED", host));
+    Serial.printf("Ping failed: %s\n", host.c_str());
   }
 }
 

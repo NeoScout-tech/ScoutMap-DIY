@@ -4,29 +4,29 @@
 #include <WiFiClient.h>
 #include <FS.h>
 #include "structs.h"
-#include "localization.h"
 #include <LittleFS.h>
 #include <WiFiClientSecure.h>
+#include <ArduinoJson.h>
 
 void scanWiFiNetworks() {
-  Serial.println(loc.getString("SCANNING_WIFI"));
+  Serial.println("Scanning Wi-Fi networks...");
   WiFi.disconnect();
   delay(100);
   
   networkCount = WiFi.scanNetworks(); // Сохраняем число сетей
   if (networkCount == 0) {
-    Serial.println(loc.getString("NETWORKS_NOT_FOUND"));
+    Serial.println("No networks found. Retrying in 5s...");
     delay(5000);
     scanWiFiNetworks();
     return;
   }
   
-  Serial.println(loc.getString("FOUND_NETWORKS", networkCount));
+  Serial.printf("Found %d networks:\n", networkCount);
   for (int i = 0; i < networkCount; i++) {
-    Serial.println(loc.getString("NETWORK_ITEM", i + 1, WiFi.SSID(i), WiFi.RSSI(i)));
+    Serial.printf("%d: %s (Signal: %d dBm)\n", i + 1, WiFi.SSID(i).c_str(), WiFi.RSSI(i));
   }
   
-  Serial.println(loc.getString("ENTER_WIFI_NUMBER", networkCount));
+  Serial.printf("Enter Wi-Fi network number (1-%d):\n", networkCount);
   awaitingNetworkSelection = true;
 }
 
@@ -34,22 +34,22 @@ void processWiFiSelection(String input) {
   int networkNumber = input.toInt();
   
   if (networkNumber < 1 || networkNumber > networkCount) { // Используем networkCount
-    Serial.println(loc.getString("INVALID_NUMBER", networkCount));
+    Serial.printf("Invalid number. Enter 1 to %d\n", networkCount);
     awaitingNetworkSelection = false;
     scanWiFiNetworks();
     return;
   }
   
   selectedSSID = WiFi.SSID(networkNumber - 1);
-  Serial.println(loc.getString("SELECTED_SSID", selectedSSID));
-  Serial.println(loc.getString("ENTER_PASSWORD", selectedSSID));
+  Serial.printf("Selected: %s\n", selectedSSID.c_str());
+  Serial.printf("Enter password for %s:\n", selectedSSID.c_str());
   awaitingNetworkSelection = false;
   awaitingPassword = true;
 }
 
 void connectToWiFi() {
   WiFi.begin(selectedSSID.c_str(), selectedPassword.c_str());
-  Serial.println(loc.getString("CONNECTING_TO", selectedSSID));
+  Serial.printf("Connecting to %s...\n", selectedSSID.c_str());
   
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 20) {
@@ -60,14 +60,14 @@ void connectToWiFi() {
   
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println();
-    Serial.println(loc.getString("CONNECTED", WiFi.localIP().toString()));
+    Serial.printf("Connected! IP: %s\n", WiFi.localIP().toString().c_str());
     if (hasInternet()) {
       promptDeviceConnection();
     } else {
       Serial.println(F("No internet connection. Skipping device connection."));
     }
   } else {
-    Serial.println(loc.getString("CONNECTION_FAILED"));
+    Serial.println("Connection failed");
     selectedSSID = "";
     selectedPassword = "";
     awaitingPassword = false;
@@ -116,7 +116,7 @@ void promptDeviceConnection() {
     }
   }
 
-  Serial.println(F("Internet detected. Would you like to connect this device to netscout.tech? (yes/no)"));
+  Serial.println("Internet detected. Would you like to connect this device to netscout.tech? (yes/no)");
   while (true) {
     if (Serial.available()) {
       String input = Serial.readStringUntil('\n');
@@ -132,7 +132,7 @@ void promptDeviceConnection() {
         awaitingPassword = false; // Сбрасываем флаг
         break;
       } else {
-        Serial.println(loc.getString("INVALID_UPLOAD_INPUT"));
+        Serial.println("Enter 'yes' or 'no'");
       }
     }
     delay(100);
@@ -156,7 +156,7 @@ void processDeviceCode(String input) {
   http.begin(client, "https://netscout.tech/connect_device");
   http.addHeader("Content-Type", "application/json");
 
-  DynamicJsonDocument doc(1024); // Увеличиваем размер буфера
+  StaticJsonDocument<1024> doc; // Используем StaticJsonDocument вместо DynamicJsonDocument
   doc["code"] = input;
   JsonObject deviceInfo = doc.createNestedObject("device_info");
   deviceInfo["name"] = "NetScout DIY (ESP8266)";
@@ -168,7 +168,7 @@ void processDeviceCode(String input) {
   int httpCode = http.POST(jsonString);
   if (httpCode == HTTP_CODE_OK) {
     String response = http.getString();
-    DynamicJsonDocument respDoc(256);
+    StaticJsonDocument<256> respDoc;
     DeserializationError error = deserializeJson(respDoc, response);
     if (!error && respDoc.containsKey("api_key")) {
       apiKey = respDoc["api_key"].as<String>();

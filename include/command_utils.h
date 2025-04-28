@@ -5,7 +5,6 @@
 #include "structs.h"
 #include "scan_utils.h"
 #include "http_utils.h"
-#include "localization.h"
 
 void parseCommand(String cmd);
 void printHelp();

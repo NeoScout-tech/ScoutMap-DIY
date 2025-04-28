@@ -6,7 +6,6 @@
 #include <WiFiClient.h>
 #include <FS.h>
 #include "structs.h"
-#include "localization.h"
 
 void scanWiFiNetworks();
 void processWiFiSelection(String input);

@@ -7,7 +7,6 @@
 #include "structs.h"
 #include "wifi_utils.h"
 #include "config.h"
-#include "localization.h"
 
 void initHostScan(bool scanAll, String startIP, String endIP);
 String resolveHost(String host);

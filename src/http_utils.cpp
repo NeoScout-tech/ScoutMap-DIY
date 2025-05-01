@@ -1,5 +1,4 @@
 #include "http_utils.h"
-#include <Arduino.h> // Для Serial
 #include <ArduinoJson.h>
 
 void uploadScanReport() {
@@ -42,13 +41,13 @@ void uploadScanReport() {
   if (debugMode) {
     Serial.println("[DEBUG] HTTP request:");
     Serial.println("[DEBUG] Method: POST");
-    Serial.println("[DEBUG] URL: https://netscout.tech/upload_report");
+    Serial.println("[DEBUG] URL: https://neoscout.ru/upload_report");
     Serial.println("[DEBUG] Headers: Content-Type: application/json");
     Serial.println("[DEBUG] Body: " + jsonString);
     Serial.flush();
   }
 
-  http.begin(client, "https://netscout.tech/upload_report");
+  http.begin(client, String(BASE_URL) + "/upload_report");
   http.addHeader("Content-Type", "application/json");
   
   int httpCode = http.POST(jsonString);
@@ -98,7 +97,7 @@ String getExternalIP() {
 
 String resolveHost(String host) {
   if (isIPAddress(host)) {
-    return host; // Если это уже IP, возвращаем без изменений
+    return host;
   }
 
   if (debugMode) {
@@ -107,24 +106,23 @@ String resolveHost(String host) {
 
   IPAddress ip;
   if (WiFi.hostByName(host.c_str(), ip)) {
-    return ip.toString(); // Преобразуем IPAddress в String
+    return ip.toString();
   } else {
     if (debugMode) {
       Serial.println("[DEBUG] Failed to resolve host: " + host);
     }
-    Serial.printf("DNS failed for %s\n", host);
-    return ""; // Возвращаем исходный хост в случае неудачи
+    Serial.printf("DNS failed for %s\n", host.c_str());
+    return "";
   }
 }
 
 String getLocation() {
   if (lastHostsArg == "all" || lastHostsArg.indexOf('-') != -1) {
-    return getExternalIP(); // Локальная сеть — внешний IP
+    return getExternalIP();
   }
 
   bool allLocal = true;
   if (lastHostsArg.indexOf(',') != -1) {
-    // Список IP
     String ipList = lastHostsArg;
     int start = 0;
     int comma = ipList.indexOf(',');
@@ -142,18 +140,16 @@ String getLocation() {
       allLocal = false;
     }
   } else {
-    // Одиночный IP или URL
     allLocal = isLocalIP(lastHostsArg);
   }
 
   if (allLocal) {
-    return getExternalIP(); // Локальная сеть — внешний IP
+    return getExternalIP();
   }
 
-  // Удалённый хост — первый IP или разрешённый URL
   String firstHost = lastHostsArg;
   if (lastHostsArg.indexOf(',') != -1) {
     firstHost = lastHostsArg.substring(0, lastHostsArg.indexOf(','));
   }
-  return resolveHost(firstHost); // Разрешаем URL в IP, если нужно
+  return resolveHost(firstHost);
 }

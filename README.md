@@ -2,7 +2,7 @@
 
 ![ScoutMap](https://i.imgur.com/0glGFjl.png)
 
-Yo, welcome to the **ScoutMap** — a badass tool cooked up by the crew at [NetScout](https://netscout.tech). This beast runs on ESP8266 for now, scanning networks, pinging hosts, and sniffing out open ports like a cyber bloodhound. It's lean, mean, and ready to dominate your network recon game. But hold up — we're already eyeing a full-on glow-up to our custom NetScout device on ESP32 for next-level performance. Ready to dive in? Let's roll.
+Yo, welcome to the **ScoutMap** — a badass tool cooked up by the crew at [NeoScout](https://neoscout.ru). This beast runs on ESP8266 for now, scanning networks, pinging hosts, and sniffing out open ports like a cyber bloodhound. It's lean, mean, and ready to dominate your network recon game. But hold up — we're already eyeing a full-on glow-up to our custom NeoScout device on ESP32 for next-level performance. Ready to dive in? Let's roll.
 
 ## What's This Thing Do?
 
@@ -16,7 +16,7 @@ This project is a network reconnaissance tool designed to:
 It's all controlled via a serial interface with commands like `scan`, `ping`, `stop`. The tool's got a progress bar for silent mode, debug mode for the nerds, and a JSON-based report system for sharing results.
 
 **Current Platform**: ESP8266 (NodeMCU v2).  
-**Future Platform**: Custom NetScout device on ESP32 (because we don't mess around).
+**Future Platform**: Custom NeoScout device on ESP32 (because we don't mess around).
 
 ## Features That Slap
 
@@ -53,7 +53,7 @@ Connect to a Wi-Fi network when prompted, then unleash these commands:
 - `stop`: Halt the current scan.
 - `help`: Show the command cheat sheet.
 
-After a scan, choose `yes` or `no` to upload the report to the server (default: `https://netscout.tech/upload`).
+After a scan, choose `yes` or `no` to upload the report to the server (default: `https://neoscout.ru/upload`).
 
 ## Project Structure
 ```
@@ -74,7 +74,7 @@ scoutmap/
 
 ## Roadmap
 
-We're not here to play small. Here's the NetScout roadmap, with progress bars to show how far we've kicked ass:
+We're not here to play small. Here's the NeoScout roadmap, with progress bars to show how far we've kicked ass:
 
 - **ESP8266 Implementation** (100% 🔥)
   - Full host and port scanning functionality.
@@ -84,7 +84,7 @@ We're not here to play small. Here's the NetScout roadmap, with progress bars to
   - Debug mode with detailed logs.
 
 - **ESP32 Migration** (10% 🚧)
-  - Port the codebase to ESP32 for our custom NetScout device.
+  - Port the codebase to ESP32 for our custom NeoScout device.
   - Leverage ESP32's dual-core power and extra memory.
   - Initial planning and hardware prototyping in progress.
 
@@ -99,7 +99,7 @@ We're not here to play small. Here's the NetScout roadmap, with progress bars to
   - Stealth scanning modes for low-profile ops.
 
 - **Mobile App Integration** (0% 📱)
-  - Build a mobile app to control the NetScout device.
+  - Build a mobile app to control the NeoScout device.
   - Push notifications for scan completion.
   - Planned for post-ESP32 release.
 
@@ -113,11 +113,11 @@ We've nailed the ESP8266 version and localization, but the ESP32 beast and fancy
 
 ## Contributing
 
-Got skills? Wanna join the NetScout crew? Fork this repo, make your changes, and sling a pull request our way. We're looking for:
+Got skills? Wanna join the NeoScout crew? Fork this repo, make your changes, and sling a pull request our way. We're looking for:
 - Bug fixes and performance tweaks.
 - Feature ideas for the ESP32 version.
 
-Check the [Issues](https://github.com/netscout-tech/scoutmap/issues) for open tasks or drop us a line at [NetScout](https://netscout.tech).
+Check the [Issues](https://github.com/neoscout-tech/scoutmap/issues) for open tasks or drop us a line at [NeoScout](https://neoscout.ru).
 
 ## License
 
@@ -125,6 +125,6 @@ This project is licensed under the MIT License — do what you want, just give u
 
 ## Contact
 
-Hit us up at [NetScout](https://netscout.tech) or join the chaos on [X](https://x.com/netscout_tech). We're always down to talk shop.
+Hit us up at [NeoScout](https://neoscout.ru) or join the chaos on [X](https://x.com/neoscout_tech). We're always down to talk shop.
 
-**NetScout — Scan. Analyze. Take control.**
+**NeoScout — Scan. Analyze. Take control.**

@@ -4,7 +4,7 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 #include "structs.h"
-#include "config.h" // Добавляем включение config.h
+#include "config.h"
 #include "wifi_utils.h"
 
 String getExternalIP();

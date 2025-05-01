@@ -12,11 +12,13 @@ void initHostScan(bool scanAll, String startIP, String endIP);
 String resolveHost(String host);
 void scanHosts();
 void scanPorts();
-void updateProgressBar();
 int countActiveHosts();
 void clearMemory();
 bool tcpPing(String host, int port);
 void manualPing(String host);
 String resolveHost(String host);
+String detectOS(String ip);
+String getServiceVersion(String ip, int port, String service);
+String scanService(String ip, int port);
 
 #endif

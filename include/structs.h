@@ -6,7 +6,7 @@
 struct Host {
     String ip;
     bool isActive;
-    uint16_t openPorts[20];
+    uint16_t openPorts[100];
     String services[20];
     int openPortCount;
 };

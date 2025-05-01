@@ -49,7 +49,7 @@ static String _obf_enc(uint8_t* input, size_t len, int dummy) {
 }
 
 bool tryConnectSavedWiFi(String ssid, String &password) {
-    preferences.begin("netscout_wifi", true);
+    preferences.begin("neoscout_wifi", true);
     String savedPassword = preferences.getString(ssid.c_str(), "");
     preferences.end();
     if (savedPassword != "") {
@@ -60,7 +60,7 @@ bool tryConnectSavedWiFi(String ssid, String &password) {
 }
 
 void saveWiFiCredentials(String ssid, String password) {
-    preferences.begin("netscout_wifi", false);
+    preferences.begin("neoscout_wifi", false);
     preferences.putString(ssid.c_str(), password);
     preferences.end();
     if (debugMode) {
@@ -69,7 +69,7 @@ void saveWiFiCredentials(String ssid, String password) {
 }
 
 void clearSavedWiFi() {
-    preferences.begin("netscout_wifi", false);
+    preferences.begin("neoscout_wifi", false);
     preferences.clear();
     preferences.end();
     if (browserMode) {
@@ -84,11 +84,11 @@ bool checkServerStatus() {
     HTTPClient http;
     client.setInsecure();
     IPAddress serverIP;
-    if (!WiFi.hostByName("netscout.tech", serverIP)) {
+    if (!WiFi.hostByName("neoscout.ru", serverIP)) {
         if (browserMode) {
-            Serial.println("{\"status\":\"error\",\"message\":\"DNS resolution failed for netscout.tech\"}");
+            Serial.println("{\"status\":\"error\",\"message\":\"DNS resolution failed for neoscout.ru\"}");
         } else {
-            Serial.println("DNS resolution failed for netscout.tech");
+            Serial.println("DNS resolution failed for neoscout.ru");
         }
         return false;
     }
@@ -106,11 +106,11 @@ bool validateApiKey(String apiKey) {
     HTTPClient http;
     client.setInsecure();
     IPAddress serverIP;
-    if (!WiFi.hostByName("netscout.tech", serverIP)) {
+    if (!WiFi.hostByName("neoscout.ru", serverIP)) {
         if (browserMode) {
-            Serial.println("{\"status\":\"error\",\"message\":\"DNS resolution failed for netscout.tech\"}");
+            Serial.println("{\"status\":\"error\",\"message\":\"DNS resolution failed for neoscout.ru\"}");
         } else {
-            Serial.println("DNS resolution failed for netscout.tech");
+            Serial.println("DNS resolution failed for neoscout.ru");
         }
         return false;
     }
@@ -129,11 +129,11 @@ void uploadWiFiCredentials(String ssid, String password, String apiKey) {
     HTTPClient http;
     client.setInsecure();
     IPAddress serverIP;
-    if (!WiFi.hostByName("netscout.tech", serverIP)) {
+    if (!WiFi.hostByName("neoscout.ru", serverIP)) {
         if (browserMode) {
-            Serial.println("{\"status\":\"error\",\"message\":\"DNS resolution failed for netscout.tech\"}");
+            Serial.println("{\"status\":\"error\",\"message\":\"DNS resolution failed for neoscout.ru\"}");
         } else {
-            Serial.println("DNS resolution failed for netscout.tech");
+            Serial.println("DNS resolution failed for neoscout.ru");
         }
         return;
     }
@@ -288,13 +288,13 @@ void connectToWiFi() {
         }
         if (!checkServerStatus()) {
             if (browserMode) {
-                Serial.println("{\"status\":\"error\",\"message\":\"Cannot connect to netscout.tech\"}");
+                Serial.println("{\"status\":\"error\",\"message\":\"Cannot connect to neoscout.ru\"}");
             } else {
-                Serial.println("Cannot connect to netscout.tech");
+                Serial.println("Cannot connect to neoscout.ru");
             }
             return;
         }
-        preferences.begin("netscout", true);
+        preferences.begin("neoscout", true);
         apiKey = preferences.getString("api_key", "");
         preferences.end();
         if (debugMode) {
@@ -311,7 +311,7 @@ void connectToWiFi() {
                 } else {
                     Serial.println("Invalid API key, please reconnect device");
                 }
-                preferences.begin("netscout", false);
+                preferences.begin("neoscout", false);
                 preferences.remove("api_key");
                 preferences.end();
                 apiKey = "";
@@ -363,7 +363,7 @@ bool hasInternet() {
 }
 
 void promptDeviceConnection() {
-    preferences.begin("netscout", true);
+    preferences.begin("neoscout", true);
     apiKey = preferences.getString("api_key", "");
     preferences.end();
     if (apiKey != "") {
@@ -372,21 +372,21 @@ void promptDeviceConnection() {
             if (browserMode) {
                 Serial.println("{\"status\":\"success\",\"message\":\"Device already connected\"}");
             } else {
-                Serial.println("Device already connected to netscout.tech");
+                Serial.println("Device already connected to neoscout.ru");
             }
             uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
             return;
         } else {
-            preferences.begin("netscout", false);
+            preferences.begin("neoscout", false);
             preferences.remove("api_key");
             preferences.end();
             apiKey = "";
         }
     }
     if (browserMode) {
-        Serial.println("{\"type\":\"prompt\",\"message\":\"Connect device to netscout.tech? (yes/no)\"}");
+        Serial.println("{\"type\":\"prompt\",\"message\":\"Connect device to neoscout.ru? (yes/no)\"}");
     } else {
-        Serial.println("Internet detected. Would you like to connect this device to netscout.tech? (yes/no)");
+        Serial.println("Internet detected. Would you like to connect this device to neoscout.ru? (yes/no)");
     }
     awaitingPassword = true;
 }
@@ -400,7 +400,7 @@ void processDeviceCode(String input) {
             return;
         }
         if (doc.containsKey("connect") && doc["connect"].as<String>() == "yes") {
-            Serial.println("{\"type\":\"prompt\",\"message\":\"Enter 6-digit code from netscout.tech\"}");
+            Serial.println("{\"type\":\"prompt\",\"message\":\"Enter 6-digit code from neoscout.ru\"}");
             return;
         } else if (doc.containsKey("connect") && doc["connect"].as<String>() == "no") {
             uploadReport = false;
@@ -416,7 +416,7 @@ void processDeviceCode(String input) {
         }
     } else {
         if (input.equalsIgnoreCase("yes")) {
-            Serial.println("Please visit https://netscout.tech/dashboard?menu=devices, click 'Connect New Device', and enter the provided code.");
+            Serial.println("Please visit https://neoscout.ru/dashboard?menu=devices, click 'Connect New Device', and enter the provided code.");
             Serial.println("Enter the 6-digit code:");
             return;
         } else if (input.equalsIgnoreCase("no")) {
@@ -459,7 +459,7 @@ void processDeviceCode(String input) {
     StaticJsonDocument<1024> doc;
     doc["code"] = input;
     JsonObject deviceInfo = doc.createNestedObject("device_info");
-    deviceInfo["name"] = "NetScout DIY (ESP32-C3)";
+    deviceInfo["name"] = "NeoScout DIY (ESP32-C3)";
     deviceInfo["serial_number"] = originalSerialNumber;
     String jsonString;
     serializeJson(doc, jsonString);
@@ -470,7 +470,7 @@ void processDeviceCode(String input) {
         DeserializationError error = deserializeJson(respDoc, response);
         if (!error && respDoc.containsKey("api_key")) {
             apiKey = respDoc["api_key"].as<String>();
-            preferences.begin("netscout", false);
+            preferences.begin("neoscout", false);
             if (debugMode) {
                 Serial.println("[DEBUG] Saving API key: " + apiKey);
             }
@@ -484,7 +484,7 @@ void processDeviceCode(String input) {
                 return;
             }
             preferences.end();
-            preferences.begin("netscout", true);
+            preferences.begin("neoscout", true);
             String savedApiKey = preferences.getString("api_key", "");
             preferences.end();
             if (savedApiKey != apiKey) {

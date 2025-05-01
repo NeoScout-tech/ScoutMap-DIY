@@ -2,7 +2,7 @@
 
 ![ScoutMap](https://i.imgur.com/0glGFjl.png)
 
-Yo, welcome to the **ScoutMap** — a badass tool cooked up by the crew at [NetScout](https://netscout.tech). This beast runs on ESP32-C3, scanning networks, pinging hosts, and sniffing out open ports like a cyber bloodhound. It's lean, mean, and ready to dominate your network recon game.
+Yo, welcome to the **ScoutMap** — a badass tool cooked up by the crew at [NeoScout](https://neoscout.ru). This beast runs on ESP32-C3, scanning networks, pinging hosts, and sniffing out open ports like a cyber bloodhound. It's lean, mean, and ready to dominate your network recon game.
 
 ## What's This Thing Do?
 
@@ -59,7 +59,7 @@ Connect to a Wi-Fi network when prompted, then unleash these commands:
 - `help`: Show the command cheat sheet.
 - `clear`: Clear saved Wi-Fi credentials.
 
-After a scan, choose `yes` or `no` to upload the report to the server (default: `https://netscout.tech/upload`).
+After a scan, choose `yes` or `no` to upload the report to the server (default: `https://neoscout.ru/upload`).
 
 ## Project Structure
 ```
@@ -80,7 +80,7 @@ scoutmap/
 
 ## Roadmap
 
-We're not here to play small. Here's the NetScout roadmap, with progress bars to show how far we've kicked ass:
+We're not here to play small. Here's the NeoScout roadmap, with progress bars to show how far we've kicked ass:
 
 - **ESP32-C3 Implementation** (100% 🔥)
   - Full host and port scanning functionality.
@@ -102,7 +102,7 @@ We're not here to play small. Here's the NetScout roadmap, with progress bars to
   - Stealth scanning modes for low-profile ops.
 
 - **Mobile App Integration** (10% 📱)
-  - Build a mobile app to control the NetScout device.
+  - Build a mobile app to control the NeoScout device.
   - Push notifications for scan completion.
 
 - **Cloud Integration** (50% ☁️)
@@ -116,13 +116,13 @@ We've nailed the ESP32-C3 version with secure storage and web API, but the fancy
 
 ## Contributing
 
-Got skills? Wanna join the NetScout crew? Fork this repo, make your changes, and sling a pull request our way. We're looking for:
+Got skills? Wanna join the NeoScout crew? Fork this repo, make your changes, and sling a pull request our way. We're looking for:
 - Bug fixes and performance tweaks.
 - Feature ideas for the ESP32-C3 version.
 - Web interface improvements.
 - Cloud integration features.
 
-Check the [Issues](https://github.com/netscout-tech/scoutmap/issues) for open tasks or drop us a line at [NetScout](https://netscout.tech).
+Check the [Issues](https://github.com/neoscout.ru/scoutmap/issues) for open tasks or drop us a line at [NeoScout](https://neoscout.ru).
 
 ## License
 
@@ -130,6 +130,6 @@ This project is licensed under the MIT License — do what you want, just give u
 
 ## Contact
 
-Hit us up at [NetScout](https://netscout.tech) or join the chaos on [X](https://x.com/netscout_tech). We're always down to talk shop.
+Hit us up at [NeoScout](https://neoscout.ru) or join the chaos on [X](https://x.com/neoscout.ru). We're always down to talk shop.
 
-**NetScout — Scan. Analyze. Take control.**
+**NeoScout — Scan. Analyze. Take control.**

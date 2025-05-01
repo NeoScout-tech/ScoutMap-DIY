@@ -1,10 +1,10 @@
-#include "scan_utils.h"
 #include <WiFi.h>
 #include <ESP32Ping.h>
+#include <ArduinoJson.h>
+#include "scan_utils.h"
 #include "structs.h"
 #include "wifi_utils.h"
 #include "config.h"
-#include <ArduinoJson.h>
 
 void initHostScan(bool isLocal, String hostsArg, String portsArg) {
     hostCount = 0;
@@ -104,6 +104,136 @@ void initHostScan(bool isLocal, String hostsArg, String portsArg) {
     }
 }
 
+String detectOS(String ip) {
+    WiFiClient client;
+    String os = "Unknown";
+    
+    if (client.connect(ip.c_str(), 80)) {
+        unsigned long startTime = millis();
+        while (!client.available() && millis() - startTime < 1000) {
+            delay(10);
+        }
+        if (client.available()) {
+            String response = client.readStringUntil('\n');
+            if (response.indexOf("Server:") != -1) {
+                if (response.indexOf("Windows") != -1) {
+                    os = "Windows";
+                } else if (response.indexOf("Linux") != -1 || response.indexOf("Ubuntu") != -1) {
+                    os = "Linux";
+                } else if (response.indexOf("FreeBSD") != -1) {
+                    os = "FreeBSD";
+                }
+            }
+        }
+        client.stop();
+    }
+    
+    if (os == "Unknown") {
+        if (client.connect(ip.c_str(), 22)) {
+            String banner = client.readStringUntil('\n');
+            if (banner.indexOf("SSH") != -1) {
+                if (banner.indexOf("OpenSSH") != -1) {
+                    os = "Linux/Unix";
+                }
+            }
+            client.stop();
+        }
+    }
+    
+    return os;
+}
+
+String getServiceVersion(String ip, int port, String service) {
+    WiFiClient client;
+    String version = "";
+    
+    if (client.connect(ip.c_str(), port)) {
+        unsigned long timeout = millis() + 1000;
+        while (!client.available() && millis() < timeout) {
+            delay(10);
+        }
+        
+        if (client.available()) {
+            String banner = client.readStringUntil('\n');
+            banner.trim();
+            
+            if (service.startsWith("HTTP")) {
+                client.print("GET / HTTP/1.0\r\n\r\n");
+                timeout = millis() + 1000;
+                while (!client.available() && millis() < timeout) {
+                    delay(10);
+                }
+                while (client.available()) {
+                    String line = client.readStringUntil('\n');
+                    if (line.startsWith("Server: ")) {
+                        version = line.substring(8);
+                        break;
+                    }
+                }
+            } else if (service.startsWith("SSH")) {
+                if (banner.indexOf("SSH-2.0-") != -1) {
+                    version = banner.substring(banner.indexOf("SSH-2.0-") + 8);
+                }
+            } else if (service.startsWith("FTP")) {
+                if (banner.indexOf("220") != -1) {
+                    version = banner.substring(4);
+                }
+            }
+        }
+        client.stop();
+    }
+    
+    return version;
+}
+
+String scanService(String ip, int port) {
+    WiFiClient client;
+    String service = "Unknown";
+    String os = detectOS(ip);
+
+    if (client.connect(ip.c_str(), port)) {
+        unsigned long timeout = millis() + 1000;
+        while (!client.available() && millis() < timeout) {
+            delay(10);
+        }
+
+        if (client.available()) {
+            String banner = client.readStringUntil('\n');
+            banner.trim();
+            if (banner.length() > 0) {
+                if (banner.startsWith("HTTP")) {
+                    service = "HTTP";
+                    String version = getServiceVersion(ip, port, service);
+                    service = "HTTP (" + version + ")";
+                } else if (banner.startsWith("SSH")) {
+                    service = "SSH";
+                    String version = getServiceVersion(ip, port, service);
+                    service = "SSH (" + version + ")";
+                } else if (banner.startsWith("220") && port == 21) {
+                    service = "FTP";
+                    String version = getServiceVersion(ip, port, service);
+                    service = "FTP (" + version + ")";
+                } else if (banner.startsWith("220") && port == 25) {
+                    service = "SMTP";
+                    String version = getServiceVersion(ip, port, service);
+                    service = "SMTP (" + version + ")";
+                } else if (port == 23) {
+                    service = "Telnet";
+                } else {
+                    service = "Unknown (" + banner + ")";
+                }
+            }
+        }
+        client.stop();
+    } else {
+        if (debugMode) {
+            Serial.println("[DEBUG] Failed to connect to " + ip + ":" + String(port));
+        }
+    }
+
+    return service + " [" + os + "]";
+}
+
 void scanHosts() {
     if (currentHostIndex >= hostCount) {
         scanningHosts = false;
@@ -150,11 +280,13 @@ void scanHosts() {
         hosts[currentHostIndex].isActive = true;
         if (!silentMode && !browserMode) {
             Serial.printf("Host %s is online\n", ip.c_str());
+            Serial.printf("ping %d, timeout %d, total payload %d bytes, %d ms\n", 1, 0, 32, 1000);
         }
     } else {
         hosts[currentHostIndex].isActive = false;
         if (!silentMode && !browserMode) {
             Serial.printf("Host %s is offline\n", ip.c_str());
+            Serial.printf("ping %d, timeout %d, total payload %d bytes, %d ms\n", 1, 1, 0, 1000);
         }
     }
 
@@ -171,55 +303,6 @@ void scanHosts() {
     } else if (!silentMode) {
         Serial.printf("Progress: %.1f%%\n", progress);
     }
-}
-
-String scanService(String ip, int port) {
-    WiFiClient client;
-    String service = "Unknown";
-
-    if (client.connect(ip.c_str(), port)) {
-        unsigned long timeout = millis() + 1000;
-        while (!client.available() && millis() < timeout) {
-            delay(10);
-        }
-
-        if (client.available()) {
-            String banner = client.readStringUntil('\n');
-            banner.trim();
-            if (banner.length() > 0) {
-                if (banner.startsWith("HTTP")) {
-                    service = "HTTP";
-                    client.print("GET / HTTP/1.0\r\n\r\n");
-                    timeout = millis() + 1000;
-                    while (!client.available() && millis() < timeout) {
-                        delay(10);
-                    }
-                    while (client.available()) {
-                        String line = client.readStringUntil('\n');
-                        if (line.startsWith("Server: ")) {
-                            service = "HTTP (" + line.substring(8) + ")";
-                            break;
-                        }
-                    }
-                } else if (banner.startsWith("SSH")) {
-                    service = "SSH (" + banner + ")";
-                } else if (banner.startsWith("220") && port == 21) {
-                    service = "FTP (" + banner.substring(4) + ")";
-                } else if (banner.startsWith("220") && port == 25) {
-                    service = "SMTP (" + banner.substring(4) + ")";
-                } else if (port == 23) {
-                    service = "Telnet";
-                } else {
-                    service = "Unknown (" + banner + ")";
-                }
-            }
-        }
-        client.stop();
-    } else if (debugMode) {
-        Serial.println("[DEBUG] Failed to connect to " + ip + ":" + String(port));
-    }
-
-    return service;
 }
 
 void scanPorts() {
@@ -300,10 +383,10 @@ void scanPorts() {
     } else {
         if (errno == 104 && hosts[currentHostIndex].openPortCount < 20) {
             hosts[currentHostIndex].openPorts[hosts[currentHostIndex].openPortCount] = currentPort;
-            hosts[currentHostIndex].services[hosts[currentHostIndex].openPortCount] = "Reset by peer";
+            hosts[currentHostIndex].services[hosts[currentHostIndex].openPortCount] = "Reset by peer [" + detectOS(ip) + "]";
             hosts[currentHostIndex].openPortCount++;
             if (!silentMode && !browserMode) {
-                Serial.printf("Port %d is open (Reset by peer)\n", currentPort);
+                Serial.printf("Port %d is open (Reset by peer [%s])\n", currentPort, detectOS(ip).c_str());
             }
         } else if (debugMode) {
             Serial.println("[DEBUG] Port " + String(currentPort) + " on " + ip + " is closed");
@@ -339,9 +422,11 @@ void manualPing(String host) {
         if (Ping.ping(ip.c_str(), 1)) {
             doc["status"] = "success";
             doc["message"] = "Ping successful";
+            doc["details"] = "ping 1, timeout 0, total payload 32 bytes, 1000 ms";
         } else {
             doc["status"] = "error";
             doc["message"] = "Ping failed";
+            doc["details"] = "ping 1, timeout 1, total payload 0 bytes, 1000 ms";
         }
         String jsonString;
         serializeJson(doc, jsonString);
@@ -349,8 +434,10 @@ void manualPing(String host) {
     } else {
         if (Ping.ping(ip.c_str(), 1)) {
             Serial.printf("Ping successful: %s\n", host.c_str());
+            Serial.printf("ping %d, timeout %d, total payload %d bytes, %d ms\n", 1, 0, 32, 1000);
         } else {
             Serial.printf("Ping failed: %s\n", host.c_str());
+            Serial.printf("ping %d, timeout %d, total payload %d bytes, %d ms\n", 1, 1, 0, 1000);
         }
     }
 }

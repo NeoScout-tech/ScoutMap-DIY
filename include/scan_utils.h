@@ -15,5 +15,8 @@ int countActiveHosts();
 void clearMemory();
 bool tcpPing(String host, int port);
 void manualPing(String host);
+String detectOS(String ip);
+String getServiceVersion(String ip, int port, String service);
+String scanService(String ip, int port);
 
 #endif

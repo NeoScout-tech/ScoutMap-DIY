@@ -5,5 +5,6 @@
 
 extern const int popularPorts[];
 extern const int popularPortsCount;
+extern String locationName;
 
 #endif

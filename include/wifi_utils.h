@@ -16,6 +16,5 @@ void saveWiFiCredentials(String ssid, String password);
 void clearSavedWiFi();
 bool checkServerStatus();
 bool validateApiKey(String apiKey);
-void uploadWiFiCredentials(String ssid, String password, String apiKey);
 
 #endif

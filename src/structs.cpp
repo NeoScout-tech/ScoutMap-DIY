@@ -27,3 +27,4 @@ int currentPort = 0;
 bool deviceConnected = false;
 String apiKey = "";
 bool browserMode = false;
+bool awaitingLocationName = false;

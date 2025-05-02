@@ -288,6 +288,17 @@ void stopScan() {
     }
 }
 
+void processLocationName(String input) {
+    input.trim();
+    if (input.length() > 0) {
+        locationName = input;
+    }
+    uploadScanReport();
+    uploadReport = false;
+    awaitingLocationName = false;
+    clearMemory();
+}
+
 void processUploadDecision(String input) {
     input.trim();
     if (browserMode) {
@@ -301,7 +312,12 @@ void processUploadDecision(String input) {
     }
     if (input == "yes") {
         uploadReport = true;
-        uploadScanReport();
+        if (browserMode) {
+            Serial.println("{\"status\":\"prompt\",\"message\":\"Enter location name (or press Enter for default)\"}");
+        } else {
+            Serial.println("Enter location name (or press Enter for default):");
+        }
+        awaitingLocationName = true;
     } else if (input == "no") {
         uploadReport = false;
         if (browserMode) {
@@ -309,6 +325,7 @@ void processUploadDecision(String input) {
         } else {
             Serial.println("Upload skipped");
         }
+        clearMemory();
     } else {
         if (browserMode) {
             Serial.println("{\"status\":\"error\",\"message\":\"Invalid upload decision, expected 'yes' or 'no'\"}");
@@ -317,6 +334,4 @@ void processUploadDecision(String input) {
         }
         return;
     }
-    uploadReport = false;
-    clearMemory();
 }

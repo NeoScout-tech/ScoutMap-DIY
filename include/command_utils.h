@@ -8,5 +8,6 @@ void printHelp();
 void stopScan();
 void processUploadDecision(String input);
 void clearWiFiCredentials();
+void processLocationName(String input);
 
 #endif

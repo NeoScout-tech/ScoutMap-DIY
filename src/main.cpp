@@ -40,7 +40,12 @@ void loop() {
                 processDeviceCode(input);
             }
         } else if (uploadReport) {
-            processUploadDecision(input);
+            if (awaitingLocationName) {
+                processLocationName(input);
+                awaitingLocationName = false;
+            } else {
+                processUploadDecision(input);
+            }
         } else {
             parseCommand(input);
         }

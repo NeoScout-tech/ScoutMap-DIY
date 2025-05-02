@@ -164,45 +164,45 @@ bool validateApiKey(String apiKey) {
     return (httpCode == HTTP_CODE_OK);
 }
 
-void uploadWiFiCredentials(String ssid, String password, String apiKey) {
-    WiFiClientSecure client;
-    HTTPClient http;
-    client.setInsecure();
-    IPAddress serverIP;
-    if (!WiFi.hostByName("netscout.tech", serverIP)) {
-        if (browserMode) {
-            Serial.println("{\"status\":\"error\",\"message\":\"DNS resolution failed for netscout.tech\"}");
-        } else {
-            Serial.println("DNS resolution failed for netscout.tech");
-        }
-        return;
-    }
-    http.begin(client, String(BASE_URL) + "/upload_wifi");
-    http.addHeader("Content-Type", "application/json");
-    http.addHeader("X-API-Key", apiKey);
-    StaticJsonDocument<256> doc;
-    doc["ssid"] = ssid;
-    doc["password"] = password;
-    String jsonString;
-    serializeJson(doc, jsonString);
-    int httpCode = http.POST(jsonString);
-    if (httpCode == HTTP_CODE_OK) {
-        if (browserMode) {
-            Serial.println("{\"status\":\"success\",\"message\":\"Wi-Fi credentials uploaded\"}");
-        } else {
-            Serial.println("Wi-Fi credentials uploaded successfully");
-        }
-    } else {
-        String response = http.getString();
-        if (browserMode) {
-            Serial.println("{\"status\":\"error\",\"message\":\"Failed to upload Wi-Fi credentials, HTTP code: " + String(httpCode) + ", Response: " + response + "\"}");
-        } else {
-            Serial.println("Failed to upload Wi-Fi credentials. HTTP code: " + String(httpCode));
-            Serial.println("Server response: " + response);
-        }
-    }
-    http.end();
-}
+// void uploadWiFiCredentials(String ssid, String password, String apiKey) {
+//     WiFiClientSecure client;
+//     HTTPClient http;
+//     client.setInsecure();
+//     IPAddress serverIP;
+//     if (!WiFi.hostByName("netscout.tech", serverIP)) {
+//         if (browserMode) {
+//             Serial.println("{\"status\":\"error\",\"message\":\"DNS resolution failed for netscout.tech\"}");
+//         } else {
+//             Serial.println("DNS resolution failed for netscout.tech");
+//         }
+//         return;
+//     }
+//     http.begin(client, String(BASE_URL) + "/upload_wifi");
+//     http.addHeader("Content-Type", "application/json");
+//     http.addHeader("X-API-Key", apiKey);
+//     StaticJsonDocument<256> doc;
+//     doc["ssid"] = ssid;
+//     doc["password"] = password;
+//     String jsonString;
+//     serializeJson(doc, jsonString);
+//     int httpCode = http.POST(jsonString);
+//     if (httpCode == HTTP_CODE_OK) {
+//         if (browserMode) {
+//             Serial.println("{\"status\":\"success\",\"message\":\"Wi-Fi credentials uploaded\"}");
+//         } else {
+//             Serial.println("Wi-Fi credentials uploaded successfully");
+//         }
+//     } else {
+//         String response = http.getString();
+//         if (browserMode) {
+//             Serial.println("{\"status\":\"error\",\"message\":\"Failed to upload Wi-Fi credentials, HTTP code: " + String(httpCode) + ", Response: " + response + "\"}");
+//         } else {
+//             Serial.println("Failed to upload Wi-Fi credentials. HTTP code: " + String(httpCode));
+//             Serial.println("Server response: " + response);
+//         }
+//     }
+//     http.end();
+// }
 
 void scanWiFiNetworks() {
     WiFi.disconnect();
@@ -344,7 +344,7 @@ void connectToWiFi() {
             if (validateApiKey(apiKey)) {
                 deviceConnected = true;
                 uploadReport = true;
-                uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
+                // uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
             } else {
                 if (browserMode) {
                     Serial.println("{\"status\":\"error\",\"message\":\"Invalid API key, please reconnect device\"}");
@@ -414,7 +414,7 @@ void promptDeviceConnection() {
             } else {
                 Serial.println("Device already connected to netscout.tech");
             }
-            uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
+            // uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
             return;
         } else {
             preferences.begin("netscout", false);
@@ -446,7 +446,7 @@ void processDeviceCode(String input) {
             uploadReport = false;
             Serial.println("{\"status\":\"success\",\"message\":\"Device connection skipped\"}");
             awaitingPassword = false;
-            uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
+            // uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
             return;
         } else if (doc.containsKey("code")) {
             input = doc["code"].as<String>();
@@ -463,7 +463,7 @@ void processDeviceCode(String input) {
             uploadReport = false;
             Serial.println("Device connection skipped. Reports will not be uploaded.");
             awaitingPassword = false;
-            uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
+            // uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
             return;
         }
     }
@@ -539,7 +539,7 @@ void processDeviceCode(String input) {
             } else {
                 Serial.println("Device connected successfully! API key saved in NVS.");
             }
-            uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
+            // uploadWiFiCredentials(selectedSSID, selectedPassword, apiKey);
             awaitingPassword = false;
         } else {
             if (browserMode) {

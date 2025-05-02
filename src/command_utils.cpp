@@ -50,7 +50,7 @@ void parseCommand(String cmd) {
                         return;
                     }
                     if (endPort - startPort + 1 > 20) {
-                        Serial.println("{\"status\":\"error\",\"message\":\"Port range exceeds maximum of 100 ports\"}");
+                        Serial.println("{\"status\":\"error\",\"message\":\"Port range exceeds maximum of 20 ports\"}");
                         return;
                     }
                     scanMode = "range";
@@ -186,7 +186,7 @@ void parseCommand(String cmd) {
             initHostScan(isLocal, lastHostsArg, portsArg);
             if (portsArg == "all") {
                 scanMode = "list";
-                portListCount = min(popularPortsCount, 100);
+                portListCount = min(popularPortsCount, 20);
                 for (int i = 0; i < portListCount; i++) {
                     portList[i] = popularPorts[i];
                 }
@@ -199,8 +199,8 @@ void parseCommand(String cmd) {
                     if (debugMode) Serial.println("[DEBUG] Invalid port range: start=" + String(startPort) + ", end=" + String(endPort));
                     return;
                 }
-                if (endPort - startPort + 1 > 100) {
-                    Serial.println("Port range exceeds maximum of 100 ports");
+                if (endPort - startPort + 1 > 20) {
+                    Serial.println("Port range exceeds maximum of 20 ports");
                     return;
                 }
                 scanMode = "range";
@@ -208,7 +208,7 @@ void parseCommand(String cmd) {
                 portListCount = 0;
                 int start = 0;
                 int comma = portsArg.indexOf(',');
-                while (comma != -1 && portListCount < 100) {
+                while (comma != -1 && portListCount < 20) {
                     int port = portsArg.substring(start, comma).toInt();
                     if (port >= 1 && port <= 65535) {
                         portList[portListCount++] = port;
@@ -217,7 +217,7 @@ void parseCommand(String cmd) {
                     comma = portsArg.indexOf(',', start);
                 }
                 int port = portsArg.substring(start).toInt();
-                if (port >= 1 && port <= 65535 && portListCount < 100) {
+                if (port >= 1 && port <= 65535 && portListCount < 20) {
                     portList[portListCount++] = port;
                 }
                 if (portListCount == 0) {
@@ -266,7 +266,7 @@ void printHelp() {
     if (browserMode) {
         StaticJsonDocument<1024> doc;
         doc["status"] = "success";
-        doc["message"] = "Commands: scan, ping, stop, set_mode, clear_wifi, lang";
+        doc["message"] = "Commands: scan, ping, stop, set_mode, clear_wifi";
         String jsonString;
         serializeJson(doc, jsonString);
         Serial.println(jsonString);
@@ -282,9 +282,7 @@ void printHelp() {
         Serial.println("  stop - Stops scan");
         Serial.println("  set_mode browser - Enables browser mode");
         Serial.println("  clear_wifi - Clears saved Wi-Fi credentials");
-        Serial.println("  lang <language_code> - Changes language");
         Serial.println("  help - Shows help");
-        Serial.println("After scan: 'yes'/'no' to upload to server");
         Serial.println("=====================");
     }
 }
@@ -300,6 +298,17 @@ void stopScan() {
     }
 }
 
+void processLocationName(String input) {
+    input.trim();
+    if (input.length() > 0) {
+        locationName = input;
+    }
+    uploadScanReport();
+    uploadReport = false;
+    awaitingLocationName = false;
+    clearMemory();
+}
+
 void processUploadDecision(String input) {
     input.trim();
     if (browserMode) {
@@ -313,7 +322,12 @@ void processUploadDecision(String input) {
     }
     if (input == "yes") {
         uploadReport = true;
-        uploadScanReport();
+        if (browserMode) {
+            Serial.println("{\"status\":\"prompt\",\"message\":\"Enter location name (or press Enter for default)\"}");
+        } else {
+            Serial.println("Enter location name (or press Enter for default):");
+        }
+        awaitingLocationName = true;
     } else if (input == "no") {
         uploadReport = false;
         if (browserMode) {
@@ -321,6 +335,7 @@ void processUploadDecision(String input) {
         } else {
             Serial.println("Upload skipped");
         }
+        clearMemory();
     } else {
         if (browserMode) {
             Serial.println("{\"status\":\"error\",\"message\":\"Invalid upload decision, expected 'yes' or 'no'\"}");
@@ -329,6 +344,4 @@ void processUploadDecision(String input) {
         }
         return;
     }
-    uploadReport = false;
-    clearMemory();
 }

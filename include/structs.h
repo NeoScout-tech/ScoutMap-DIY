@@ -38,5 +38,6 @@ extern int currentPort;
 extern bool deviceConnected;
 extern String apiKey;
 extern bool browserMode;
+extern bool awaitingLocationName;
 
 #endif

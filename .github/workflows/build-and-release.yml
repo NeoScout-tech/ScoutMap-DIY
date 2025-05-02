@@ -27,34 +27,61 @@ jobs:
     - name: Install dependencies
       run: pio pkg install
 
-    - name: Build firmware
-      run: pio run -e nodemcuv2
+    - name: Build ESP32C3 firmware
+      run: pio run -e esp32c3_supermini
 
-    - name: Verify firmware size
+    - name: Rename ESP32C3 firmware
+      run: cp .pio/build/esp32c3_supermini/firmware.bin esp32-c3.bin
+
+    - name: Verify ESP32C3 firmware size
       run: |
-        FIRMWARE_SIZE=$(stat -c%s .pio/build/nodemcuv2/firmware.bin)
+        FIRMWARE_SIZE=$(stat -c%s esp32-c3.bin)
         if [ $FIRMWARE_SIZE -gt 1048576 ]; then
-          echo "Firmware size exceeds 1MB"
+          echo "ESP32C3 firmware size exceeds 1MB"
           exit 1
         fi
 
-    - name: Upload firmware artifact
+    - name: Build ESP8266 firmware
+      run: pio run -e esp8266
+
+    - name: Rename ESP8266 firmware
+      run: cp .pio/build/esp8266/firmware.bin esp8266.bin
+
+    - name: Verify ESP8266 firmware size
+      run: |
+        FIRMWARE_SIZE=$(stat -c%s esp8266.bin)
+        if [ $FIRMWARE_SIZE -gt 1048576 ]; then
+          echo "ESP8266 firmware size exceeds 1MB"
+          exit 1
+        fi
+
+    - name: Upload ESP32C3 firmware artifact
       uses: actions/upload-artifact@v4
       with:
-        name: firmware
-        path: .pio/build/nodemcuv2/firmware.bin
+        name: firmware-esp32c3
+        path: esp32-c3.bin
+        retention-days: 5
+
+    - name: Upload ESP8266 firmware artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware-esp8266
+        path: esp8266.bin
         retention-days: 5
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        files: .pio/build/nodemcuv2/firmware.bin
+        files: |
+          esp32-c3.bin
+          esp8266.bin
         name: Release ${{ github.ref_name }}
         body: |
           Automated firmware release
           - Version: ${{ github.ref_name }}
           - Build date: ${{ github.event.head_commit.timestamp }}
           - Commit: ${{ github.sha }}
+          - Includes firmware for ESP32C3 and ESP8266
         draft: false
         prerelease: false
       env:

@@ -7,7 +7,6 @@
 #include "config.h"
 #include "wifi_utils.h"
 
-String getExternalIP();
 String getLocation();
 void uploadScanReport();
 

@@ -117,39 +117,13 @@ String resolveHost(String host) {
 }
 
 String getLocation() {
-  if (lastHostsArg == "all" || lastHostsArg.indexOf('-') != -1) {
-    return getExternalIP();
-  }
-
-  bool allLocal = true;
-  if (lastHostsArg.indexOf(',') != -1) {
-    String ipList = lastHostsArg;
-    int start = 0;
-    int comma = ipList.indexOf(',');
-    while (comma != -1) {
-      String ip = ipList.substring(start, comma);
-      if (!isLocalIP(ip)) {
-        allLocal = false;
-        break;
-      }
-      start = comma + 1;
-      comma = ipList.indexOf(',', start);
+    if (locationName == "") {
+        char deviceName[32];
+        WiFi.macAddress().toCharArray(deviceName, 32);
+        char timestamp[20];
+        time_t now = time(nullptr);
+        strftime(timestamp, sizeof(timestamp), "%Y%m%d", localtime(&now));
+        locationName = String(deviceName) + "-ScoutMap-" + String(timestamp);
     }
-    String ip = ipList.substring(start);
-    if (!isLocalIP(ip)) {
-      allLocal = false;
-    }
-  } else {
-    allLocal = isLocalIP(lastHostsArg);
-  }
-
-  if (allLocal) {
-    return getExternalIP();
-  }
-
-  String firstHost = lastHostsArg;
-  if (lastHostsArg.indexOf(',') != -1) {
-    firstHost = lastHostsArg.substring(0, lastHostsArg.indexOf(','));
-  }
-  return resolveHost(firstHost);
+    return locationName;
 }

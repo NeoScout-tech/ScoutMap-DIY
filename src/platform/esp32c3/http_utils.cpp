@@ -70,6 +70,7 @@ void uploadScanReport() {
 
     http.end();
 }
+
 String resolveHost(String host) {
     if (isIPAddress(host)) {
         return host;

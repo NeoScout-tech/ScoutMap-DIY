@@ -24,65 +24,45 @@ jobs:
         pip install --user platformio
         pio --version
 
-    - name: Install dependencies
-      run: pio pkg install
-
-    - name: Build ESP32C3 firmware
-      run: pio run -e esp32c3_supermini
-
-    - name: Rename ESP32C3 firmware
-      run: cp .pio/build/esp32c3_supermini/firmware.bin esp32-c3.bin
-
-    - name: Verify ESP32C3 firmware size
+    - name: Build firmwares
       run: |
-        FIRMWARE_SIZE=$(stat -c%s esp32-c3.bin)
-        if [ $FIRMWARE_SIZE -gt 1048576 ]; then
-          echo "ESP32C3 firmware size exceeds 1MB"
-          exit 1
-        fi
-
-    - name: Build ESP8266 firmware
-      run: pio run -e esp8266
-
-    - name: Rename ESP8266 firmware
-      run: cp .pio/build/esp8266/firmware.bin esp8266.bin
-
-    - name: Verify ESP8266 firmware size
+        pio run -e esp32c3_supermini
+        pio run -e esp8266
+        
+    - name: Prepare artifacts
       run: |
-        FIRMWARE_SIZE=$(stat -c%s esp8266.bin)
-        if [ $FIRMWARE_SIZE -gt 1048576 ]; then
-          echo "ESP8266 firmware size exceeds 1MB"
-          exit 1
-        fi
+        mkdir -p artifacts
+        cp .pio/build/esp32c3_supermini/firmware.bin artifacts/esp32-c3.bin
+        cp .pio/build/esp8266/firmware.bin artifacts/esp8266.bin
+        
+    - name: Verify firmware sizes
+      run: |
+        echo "ESP32-C3 size: $(stat -c%s artifacts/esp32-c3.bin) bytes"
+        echo "ESP8266 size: $(stat -c%s artifacts/esp8266.bin) bytes"
+        [ $(stat -c%s artifacts/esp32-c3.bin) -le 1048576 ] || (echo "ESP32-C3 too large"; exit 1)
+        [ $(stat -c%s artifacts/esp8266.bin) -le 1048576 ] || (echo "ESP8266 too large"; exit 1)
 
-    - name: Upload ESP32C3 firmware artifact
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: firmware-esp32c3
-        path: esp32-c3.bin
-        retention-days: 5
-
-    - name: Upload ESP8266 firmware artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: firmware-esp8266
-        path: esp8266.bin
+        name: firmware-binaries
+        path: artifacts/*
         retention-days: 5
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        files: |
-          esp32-c3.bin
-          esp8266.bin
+        files: artifacts/*
         name: Release ${{ github.ref_name }}
         body: |
           Automated firmware release
           - Version: ${{ github.ref_name }}
-          - Build date: ${{ github.event.head_commit.timestamp }}
+          - Build date: $(date -u +'%Y-%m-%d %H:%M:%S')
           - Commit: ${{ github.sha }}
-          - Includes firmware for ESP32C3 and ESP8266
+          Includes:
+          - ESP32-C3 SuperMini firmware
+          - ESP8266 firmware
         draft: false
         prerelease: false
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

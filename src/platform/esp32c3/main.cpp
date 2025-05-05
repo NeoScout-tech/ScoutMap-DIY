@@ -2,11 +2,11 @@
 #include <WiFi.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
-#include "command_utils.h"
-#include "scan_utils.h"
-#include "wifi_utils.h"
-#include "http_utils.h"
-#include "structs.h"
+#include "common/command_utils.h"
+#include "platform/esp32c3/scan_utils.h"
+#include "platform/esp32c3/wifi_utils.h"
+#include "platform/esp32c3/http_utils.h"
+#include "common/structs.h"
 
 void setup() {
     Serial.begin(115200);

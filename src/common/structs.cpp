@@ -1,5 +1,6 @@
 #include "structs.h"
 
+// Инициализация переменных
 String selectedSSID = "";
 String selectedPassword = "";
 bool awaitingPassword = false;
@@ -9,10 +10,14 @@ String lastHostsArg = "";
 String scanMode = "";
 int startPort = 0;
 int endPort = 0;
-uint16_t portList[100];
+
+// Платформо-зависимые массивы
+port_type_t portList[MAX_PORT_LIST] = {0};
 int portListCount = 0;
 int hostCount = 0;
-Host hosts[256];
+Host hosts[MAX_HOSTS];
+
+// Остальные переменные
 bool scanningHosts = false;
 bool scanningPorts = false;
 int totalSteps = 0;
